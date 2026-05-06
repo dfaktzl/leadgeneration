@@ -15,6 +15,8 @@ import {
   Send,
 } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -68,13 +70,44 @@ const trustBadges = [
 
 function Index() {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const data = new FormData(e.currentTarget);
-    const subject = `Quote Request — ${data.get("service") || "General"}`;
-    const body = `Name: ${data.get("name")}\nEmail: ${data.get("email")}\nPhone: ${data.get("phone")}\nService: ${data.get("service")}\nCurrently paying: ${data.get("current")}\n\nDetails:\n${data.get("message")}`;
-    window.location.href = `mailto:hello@example.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    if (submitting) return;
+    const form = e.currentTarget;
+    const data = new FormData(form);
+
+    const payload = {
+      name: String(data.get("name") || "").trim().slice(0, 100),
+      email: String(data.get("email") || "").trim().slice(0, 255),
+      phone: String(data.get("phone") || "").trim().slice(0, 50) || null,
+      service: String(data.get("service") || "").trim().slice(0, 100),
+      current_payment: String(data.get("current") || "").trim().slice(0, 200) || null,
+      message: String(data.get("message") || "").trim().slice(0, 2000) || null,
+    };
+
+    if (!payload.name || !payload.email || !payload.service) {
+      toast.error("Please fill in name, email, and service.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    setSubmitting(true);
+    const { error } = await supabase.from("leads").insert(payload);
+    setSubmitting(false);
+
+    if (error) {
+      console.error("Lead submission failed:", error);
+      toast.error("Something went wrong. Please try again or email me directly.");
+      return;
+    }
+
+    toast.success("Enquiry received — I'll be in touch within 24 hours.");
+    form.reset();
     setSubmitted(true);
   };
 
@@ -287,12 +320,13 @@ function Index() {
           {submitted ? (
             <div className="p-8 rounded-xl bg-card border border-primary/40 text-center">
               <CheckCircle2 size={40} className="text-primary mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Your email client is opening…</h3>
+              <h3 className="text-xl font-semibold mb-2">Enquiry received — thank you.</h3>
               <p className="text-muted-foreground">
-                If nothing happened, email me directly at{" "}
+                I'll be in touch within 24 hours. For anything urgent, email{" "}
                 <a href="mailto:hello@example.com" className="text-primary underline">
                   hello@example.com
                 </a>
+                .
               </p>
             </div>
           ) : (
@@ -341,10 +375,11 @@ function Index() {
 
               <button
                 type="submit"
-                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-md bg-primary text-primary-foreground font-semibold hover:opacity-90 transition"
+                disabled={submitting}
+                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-md bg-primary text-primary-foreground font-semibold hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
                 style={{ boxShadow: "var(--shadow-glow)" }}
               >
-                Send Enquiry <Send size={18} />
+                {submitting ? "Sending…" : <>Send Enquiry <Send size={18} /></>}
               </button>
             </form>
           )}
