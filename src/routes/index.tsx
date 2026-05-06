@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Code2,
   GraduationCap,
@@ -26,7 +26,12 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
+import { Logo } from "@/components/Logo";
+import { track, getEngagementSummary } from "@/lib/analytics";
+
+const RATING_VALUE = 5.0;
 
 export const Route = createFileRoute("/")({
   component: Index,
