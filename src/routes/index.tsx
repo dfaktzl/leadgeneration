@@ -267,8 +267,8 @@ function Index() {
       {/* Nav */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-background/70 border-b border-border">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <a href="#" className="font-bold tracking-tight text-lg">
-            <span className="text-primary">//</span> PerthTech
+          <a href="#" className="text-lg">
+            <Logo />
           </a>
           <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
             <a href="#services" className="hover:text-foreground transition-colors">Services</a>
