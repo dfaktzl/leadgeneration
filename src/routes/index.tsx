@@ -455,8 +455,12 @@ function Index() {
               <h3 className="text-xl font-semibold mb-2">Enquiry received — thank you.</h3>
               <p className="text-muted-foreground">
                 I'll be in touch within 24 hours. For anything urgent, email{" "}
-                <a href="mailto:hello@example.com" className="text-primary underline">
-                  hello@example.com
+                <a href="mailto:matt@xfer.au" className="text-primary underline">
+                  matt@xfer.au
+                </a>{" "}
+                or call{" "}
+                <a href="tel:+61450910100" className="text-primary underline">
+                  0450 910 100
                 </a>
                 .
               </p>
