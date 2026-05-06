@@ -44,6 +44,43 @@ export const Route = createFileRoute("/")({
           "Stop overpaying for monthly website subscriptions. Senior-level IT from a local Perth veteran.",
       },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          name: "Perth Web & IT Solutions",
+          description:
+            "Senior IT consultant in Queens Park serving Perth 6000. Custom websites, tutoring, hardware repair & consultancy.",
+          areaServed: "Perth, WA 6000",
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: "Queens Park",
+            addressRegion: "WA",
+            postalCode: "6107",
+            addressCountry: "AU",
+          },
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: "5",
+            bestRating: "5",
+            worstRating: "1",
+            reviewCount: String(testimonials.length),
+          },
+          review: testimonials.map((t) => ({
+            "@type": "Review",
+            reviewRating: {
+              "@type": "Rating",
+              ratingValue: "5",
+              bestRating: "5",
+            },
+            author: { "@type": "Person", name: t.name },
+            reviewBody: t.quote,
+          })),
+        }),
+      },
+    ],
   }),
 });
 
