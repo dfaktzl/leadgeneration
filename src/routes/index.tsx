@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Code2,
   GraduationCap,
@@ -26,7 +26,12 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
+import { Logo } from "@/components/Logo";
+import { track, getEngagementSummary } from "@/lib/analytics";
+
+const RATING_VALUE = 5.0;
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -64,7 +69,7 @@ export const Route = createFileRoute("/")({
           },
           aggregateRating: {
             "@type": "AggregateRating",
-            ratingValue: "5",
+            ratingValue: RATING_VALUE.toFixed(1),
             bestRating: "5",
             worstRating: "1",
             reviewCount: String(testimonials.length),
@@ -151,6 +156,62 @@ const trustBadges = [
 function Index() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+  const testimonialsRef = useRef<HTMLDivElement | null>(null);
+  const quoteRef = useRef<HTMLDivElement | null>(null);
+
+  // Observe section views
+  useEffect(() => {
+    const targets: Array<[HTMLElement | null, "testimonial_view" | "quote_form_view"]> = [
+      [testimonialsRef.current, "testimonial_view"],
+      [quoteRef.current, "quote_form_view"],
+    ];
+    const seen = new Set<string>();
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const name = (e.target as HTMLElement).dataset.event as
+            | "testimonial_view"
+            | "quote_form_view"
+            | undefined;
+          if (e.isIntersecting && name && !seen.has(name)) {
+            seen.add(name);
+            track(name);
+          }
+        }
+      },
+      { threshold: 0.4 }
+    );
+    targets.forEach(([el, name]) => {
+      if (el) {
+        el.dataset.event = name;
+        obs.observe(el);
+      }
+    });
+    return () => obs.disconnect();
+  }, []);
+
+  // Track carousel slide changes (covers swipe, drag, arrow click)
+  useEffect(() => {
+    if (!carouselApi) return;
+    let lastIndex = carouselApi.selectedScrollSnap();
+    const onSelect = () => {
+      const idx = carouselApi.selectedScrollSnap();
+      const isPointer = (carouselApi as unknown as { internalEngine?: () => { dragHandler?: { pointerDown?: () => boolean } } })
+        .internalEngine?.()?.dragHandler?.pointerDown?.();
+      track("testimonial_slide", {
+        from: lastIndex,
+        to: idx,
+        method: isPointer ? "swipe" : "button",
+      });
+      if (isPointer) track("testimonial_swipe", { index: idx });
+      lastIndex = idx;
+    };
+    carouselApi.on("select", onSelect);
+    return () => {
+      carouselApi.off("select", onSelect);
+    };
+  }, [carouselApi]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -186,6 +247,12 @@ function Index() {
       return;
     }
 
+    const engagement = getEngagementSummary();
+    track("quote_submitted", {
+      service: payload.service,
+      hasCurrentPayment: !!payload.current_payment,
+      ...engagement,
+    });
     toast.success("Enquiry received — I'll be in touch within 24 hours.");
     form.reset();
     setSubmitted(true);
@@ -200,8 +267,8 @@ function Index() {
       {/* Nav */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-background/70 border-b border-border">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <a href="#" className="font-bold tracking-tight text-lg">
-            <span className="text-primary">//</span> PerthTech
+          <a href="#" className="text-lg">
+            <Logo />
           </a>
           <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
             <a href="#services" className="hover:text-foreground transition-colors">Services</a>
@@ -254,6 +321,20 @@ function Index() {
             >
               See Services
             </a>
+          </div>
+          <div
+            className="mt-8 inline-flex items-center gap-3 px-4 py-2 rounded-full border border-border bg-card/60 text-sm"
+            aria-label={`Rated ${RATING_VALUE.toFixed(1)} out of 5 from ${testimonials.length} client reviews`}
+          >
+            <div className="flex gap-0.5" aria-hidden>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star key={i} size={14} className="fill-primary text-primary" />
+              ))}
+            </div>
+            <span className="font-semibold">{RATING_VALUE.toFixed(1)}</span>
+            <span className="text-muted-foreground">
+              from {testimonials.length} local client reviews
+            </span>
           </div>
         </div>
       </section>
@@ -352,17 +433,28 @@ function Index() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 md:py-28 px-6 border-t border-border">
+      <section className="py-20 md:py-28 px-6 border-t border-border" ref={testimonialsRef}>
         <div className="max-w-6xl mx-auto">
-          <div className="max-w-2xl mb-14">
+          <div className="max-w-2xl mb-14 flex flex-col gap-3">
             <span className="text-xs uppercase tracking-widest text-primary font-bold">
               What Clients Say
             </span>
-            <h2 className="mt-3 text-3xl md:text-5xl font-bold tracking-tight">
+            <h2 className="text-3xl md:text-5xl font-bold tracking-tight">
               Trusted by Perth locals & small businesses.
             </h2>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex gap-0.5" aria-hidden>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} size={14} className="fill-primary text-primary" />
+                ))}
+              </div>
+              <span>
+                <strong className="text-foreground">{RATING_VALUE.toFixed(1)}</strong> average · {testimonials.length} reviews
+              </span>
+            </div>
           </div>
           <Carousel
+            setApi={setCarouselApi}
             opts={{ align: "start", loop: true }}
             className="w-full"
           >
@@ -436,7 +528,7 @@ function Index() {
       </section>
 
       {/* Quote Form */}
-      <section id="quote" className="py-20 md:py-28 px-6 border-t border-border">
+      <section id="quote" className="py-20 md:py-28 px-6 border-t border-border" ref={quoteRef}>
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-12">
             <span className="text-xs uppercase tracking-widest text-primary font-bold">
@@ -526,8 +618,9 @@ function Index() {
       {/* Footer */}
       <footer className="border-t border-border py-10 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <div>
-            © {new Date().getFullYear()} Matt — Queens Park, WA 6000
+          <div className="flex items-center gap-3">
+            <Logo />
+            <span>· © {new Date().getFullYear()} Queens Park, WA 6000</span>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <a
