@@ -528,7 +528,7 @@ function Index() {
       </section>
 
       {/* Quote Form */}
-      <section id="quote" className="py-20 md:py-28 px-6 border-t border-border">
+      <section id="quote" className="py-20 md:py-28 px-6 border-t border-border" ref={quoteRef}>
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-12">
             <span className="text-xs uppercase tracking-widest text-primary font-bold">
