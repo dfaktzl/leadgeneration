@@ -247,6 +247,12 @@ function Index() {
       return;
     }
 
+    const engagement = getEngagementSummary();
+    track("quote_submitted", {
+      service: payload.service,
+      hasCurrentPayment: !!payload.current_payment,
+      ...engagement,
+    });
     toast.success("Enquiry received — I'll be in touch within 24 hours.");
     form.reset();
     setSubmitted(true);
