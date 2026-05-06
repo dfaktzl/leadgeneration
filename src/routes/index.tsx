@@ -69,7 +69,7 @@ export const Route = createFileRoute("/")({
           },
           aggregateRating: {
             "@type": "AggregateRating",
-            ratingValue: "5",
+            ratingValue: RATING_VALUE.toFixed(1),
             bestRating: "5",
             worstRating: "1",
             reviewCount: String(testimonials.length),
