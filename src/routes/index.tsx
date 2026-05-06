@@ -361,29 +361,45 @@ function Index() {
               Trusted by Perth locals & small businesses.
             </h2>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {testimonials.map((t) => (
-              <figure
-                key={t.name}
-                className="relative p-7 rounded-xl bg-card border border-border hover:border-primary/40 transition-colors flex flex-col"
-                style={{ boxShadow: "var(--shadow-card)" }}
-              >
-                <Quote size={28} className="text-primary/40 mb-4" />
-                <div className="flex gap-0.5 mb-3" aria-label="5 out of 5 stars">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} size={14} className="fill-primary text-primary" />
-                  ))}
-                </div>
-                <blockquote className="text-foreground leading-relaxed flex-1">
-                  "{t.quote}"
-                </blockquote>
-                <figcaption className="mt-6 pt-5 border-t border-border">
-                  <div className="font-semibold text-sm">{t.name}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{t.role}</div>
-                </figcaption>
-              </figure>
-            ))}
-          </div>
+          <Carousel
+            opts={{ align: "start", loop: true }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-5">
+              {testimonials.map((t) => (
+                <CarouselItem
+                  key={t.name}
+                  className="pl-5 basis-full md:basis-1/2 lg:basis-1/3"
+                >
+                  <figure
+                    className="relative h-full p-7 rounded-xl bg-card border border-border hover:border-primary/40 transition-colors flex flex-col"
+                    style={{ boxShadow: "var(--shadow-card)" }}
+                  >
+                    <Quote size={28} className="text-primary/40 mb-4" />
+                    <div className="flex gap-0.5 mb-3" aria-label="5 out of 5 stars">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star key={i} size={14} className="fill-primary text-primary" />
+                      ))}
+                    </div>
+                    <blockquote className="text-foreground leading-relaxed flex-1">
+                      "{t.quote}"
+                    </blockquote>
+                    <figcaption className="mt-6 pt-5 border-t border-border">
+                      <div className="font-semibold text-sm">{t.name}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{t.role}</div>
+                    </figcaption>
+                  </figure>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <div className="hidden md:block">
+              <CarouselPrevious />
+              <CarouselNext />
+            </div>
+            <p className="md:hidden text-center text-xs text-muted-foreground mt-6">
+              Swipe to see more →
+            </p>
+          </Carousel>
         </div>
       </section>
 
