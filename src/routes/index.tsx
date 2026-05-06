@@ -63,6 +63,39 @@ const services = [
   },
 ];
 
+const testimonials = [
+  {
+    quote:
+      "Cut our website bill in half and the new site loads twice as fast. Wish we'd found him a year ago.",
+    name: "Sarah M.",
+    role: "Owner, Boutique Retail — Victoria Park",
+  },
+  {
+    quote:
+      "Fixed a workstation issue three other techs gave up on. Honest, fast, and explained everything in plain English.",
+    name: "David K.",
+    role: "Architect — Perth CBD",
+  },
+  {
+    quote:
+      "Built our booking site from scratch in under two weeks. We own it outright — no monthly trap. Bookings doubled.",
+    name: "Priya R.",
+    role: "Director, Wellness Studio — South Perth",
+  },
+  {
+    quote:
+      "Patient, clear, and never made me feel silly for asking. I finally understand the AI tools I'm paying for.",
+    name: "Margaret T.",
+    role: "Tutoring Client — Queens Park",
+  },
+  {
+    quote:
+      "Senior-grade consulting at a fraction of the agency quote. Workflow automation paid for itself in a month.",
+    name: "James L.",
+    role: "Operations Lead, Logistics SME",
+  },
+];
+
 const trustBadges = [
   { icon: MapPin, label: "Based in Queens Park" },
   { icon: Users, label: "Serving Perth 6000" },
