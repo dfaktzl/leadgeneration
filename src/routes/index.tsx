@@ -526,14 +526,22 @@ function Index() {
       <footer className="border-t border-border py-10 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div>
-            © {new Date().getFullYear()} PerthTech — Queens Park, WA 6000
+            © {new Date().getFullYear()} Matt — Queens Park, WA 6000
           </div>
-          <a
-            href="mailto:hello@example.com"
-            className="inline-flex items-center gap-2 hover:text-foreground transition"
-          >
-            <Mail size={16} /> hello@example.com
-          </a>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <a
+              href="tel:+61450910100"
+              className="inline-flex items-center gap-2 hover:text-foreground transition"
+            >
+              <Phone size={16} /> 0450 910 100
+            </a>
+            <a
+              href="mailto:matt@xfer.au"
+              className="inline-flex items-center gap-2 hover:text-foreground transition"
+            >
+              <Mail size={16} /> matt@xfer.au
+            </a>
+          </div>
         </div>
       </footer>
     </main>
