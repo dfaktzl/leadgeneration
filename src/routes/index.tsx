@@ -13,6 +13,8 @@ import {
   ArrowRight,
   Mail,
   Send,
+  Quote,
+  Star,
 } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 import { supabase } from "@/integrations/supabase/client";
