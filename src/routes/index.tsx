@@ -433,17 +433,28 @@ function Index() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 md:py-28 px-6 border-t border-border">
+      <section className="py-20 md:py-28 px-6 border-t border-border" ref={testimonialsRef}>
         <div className="max-w-6xl mx-auto">
-          <div className="max-w-2xl mb-14">
+          <div className="max-w-2xl mb-14 flex flex-col gap-3">
             <span className="text-xs uppercase tracking-widest text-primary font-bold">
               What Clients Say
             </span>
-            <h2 className="mt-3 text-3xl md:text-5xl font-bold tracking-tight">
+            <h2 className="text-3xl md:text-5xl font-bold tracking-tight">
               Trusted by Perth locals & small businesses.
             </h2>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex gap-0.5" aria-hidden>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} size={14} className="fill-primary text-primary" />
+                ))}
+              </div>
+              <span>
+                <strong className="text-foreground">{RATING_VALUE.toFixed(1)}</strong> average · {testimonials.length} reviews
+              </span>
+            </div>
           </div>
           <Carousel
+            setApi={setCarouselApi}
             opts={{ align: "start", loop: true }}
             className="w-full"
           >
