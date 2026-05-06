@@ -13,6 +13,8 @@ import {
   ArrowRight,
   Mail,
   Send,
+  Quote,
+  Star,
 } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,6 +60,39 @@ const services = [
     icon: Briefcase,
     title: "Consultancy",
     desc: "Senior IT strategy and workflow automation. Cut waste, ship faster, scale without the agency overhead.",
+  },
+];
+
+const testimonials = [
+  {
+    quote:
+      "Cut our website bill in half and the new site loads twice as fast. Wish we'd found him a year ago.",
+    name: "Sarah M.",
+    role: "Owner, Boutique Retail — Victoria Park",
+  },
+  {
+    quote:
+      "Fixed a workstation issue three other techs gave up on. Honest, fast, and explained everything in plain English.",
+    name: "David K.",
+    role: "Architect — Perth CBD",
+  },
+  {
+    quote:
+      "Built our booking site from scratch in under two weeks. We own it outright — no monthly trap. Bookings doubled.",
+    name: "Priya R.",
+    role: "Director, Wellness Studio — South Perth",
+  },
+  {
+    quote:
+      "Patient, clear, and never made me feel silly for asking. I finally understand the AI tools I'm paying for.",
+    name: "Margaret T.",
+    role: "Tutoring Client — Queens Park",
+  },
+  {
+    quote:
+      "Senior-grade consulting at a fraction of the agency quote. Workflow automation paid for itself in a month.",
+    name: "James L.",
+    role: "Operations Lead, Logistics SME",
   },
 ];
 
@@ -266,6 +301,43 @@ function Index() {
                 <h3 className="text-xl font-semibold mb-2">{s.title}</h3>
                 <p className="text-muted-foreground leading-relaxed">{s.desc}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-20 md:py-28 px-6 border-t border-border">
+        <div className="max-w-6xl mx-auto">
+          <div className="max-w-2xl mb-14">
+            <span className="text-xs uppercase tracking-widest text-primary font-bold">
+              What Clients Say
+            </span>
+            <h2 className="mt-3 text-3xl md:text-5xl font-bold tracking-tight">
+              Trusted by Perth locals & small businesses.
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {testimonials.map((t) => (
+              <figure
+                key={t.name}
+                className="relative p-7 rounded-xl bg-card border border-border hover:border-primary/40 transition-colors flex flex-col"
+                style={{ boxShadow: "var(--shadow-card)" }}
+              >
+                <Quote size={28} className="text-primary/40 mb-4" />
+                <div className="flex gap-0.5 mb-3" aria-label="5 out of 5 stars">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} size={14} className="fill-primary text-primary" />
+                  ))}
+                </div>
+                <blockquote className="text-foreground leading-relaxed flex-1">
+                  "{t.quote}"
+                </blockquote>
+                <figcaption className="mt-6 pt-5 border-t border-border">
+                  <div className="font-semibold text-sm">{t.name}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{t.role}</div>
+                </figcaption>
+              </figure>
             ))}
           </div>
         </div>
