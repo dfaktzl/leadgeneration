@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   ArrowRight,
   Mail,
+  Phone,
   Send,
   Quote,
   Star,
