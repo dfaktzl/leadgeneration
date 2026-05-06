@@ -156,6 +156,62 @@ const trustBadges = [
 function Index() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+  const testimonialsRef = useRef<HTMLDivElement | null>(null);
+  const quoteRef = useRef<HTMLDivElement | null>(null);
+
+  // Observe section views
+  useEffect(() => {
+    const targets: Array<[HTMLElement | null, "testimonial_view" | "quote_form_view"]> = [
+      [testimonialsRef.current, "testimonial_view"],
+      [quoteRef.current, "quote_form_view"],
+    ];
+    const seen = new Set<string>();
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const name = (e.target as HTMLElement).dataset.event as
+            | "testimonial_view"
+            | "quote_form_view"
+            | undefined;
+          if (e.isIntersecting && name && !seen.has(name)) {
+            seen.add(name);
+            track(name);
+          }
+        }
+      },
+      { threshold: 0.4 }
+    );
+    targets.forEach(([el, name]) => {
+      if (el) {
+        el.dataset.event = name;
+        obs.observe(el);
+      }
+    });
+    return () => obs.disconnect();
+  }, []);
+
+  // Track carousel slide changes (covers swipe, drag, arrow click)
+  useEffect(() => {
+    if (!carouselApi) return;
+    let lastIndex = carouselApi.selectedScrollSnap();
+    const onSelect = () => {
+      const idx = carouselApi.selectedScrollSnap();
+      const isPointer = (carouselApi as unknown as { internalEngine?: () => { dragHandler?: { pointerDown?: () => boolean } } })
+        .internalEngine?.()?.dragHandler?.pointerDown?.();
+      track("testimonial_slide", {
+        from: lastIndex,
+        to: idx,
+        method: isPointer ? "swipe" : "button",
+      });
+      if (isPointer) track("testimonial_swipe", { index: idx });
+      lastIndex = idx;
+    };
+    carouselApi.on("select", onSelect);
+    return () => {
+      carouselApi.off("select", onSelect);
+    };
+  }, [carouselApi]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
