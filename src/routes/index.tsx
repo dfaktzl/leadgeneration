@@ -322,6 +322,20 @@ function Index() {
               See Services
             </a>
           </div>
+          <div
+            className="mt-8 inline-flex items-center gap-3 px-4 py-2 rounded-full border border-border bg-card/60 text-sm"
+            aria-label={`Rated ${RATING_VALUE.toFixed(1)} out of 5 from ${testimonials.length} client reviews`}
+          >
+            <div className="flex gap-0.5" aria-hidden>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star key={i} size={14} className="fill-primary text-primary" />
+              ))}
+            </div>
+            <span className="font-semibold">{RATING_VALUE.toFixed(1)}</span>
+            <span className="text-muted-foreground">
+              from {testimonials.length} local client reviews
+            </span>
+          </div>
         </div>
       </section>
 
