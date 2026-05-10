@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Guardian Eye Tracker">
+<title>Guardian Eye — Security Lead Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e1117; --bg2: #161b22; --card: #1c2128; --border: #2d333b;
+  --text: #e6edf3; --muted: #8b949e;
+  --cyan: #39d0d8; --green: #3fb950; --yellow: #d29922; --red: #f85149; --purple: #a371f7; --orange: #e3872d;
+  --font: 'Outfit', system-ui, sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { font-family: var(--font); background: var(--bg); color: var(--text); }
+body { min-height: 100vh; }
+
+/* Top bar */
+.topbar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 16px 24px; position: sticky; top:0; z-index:50; }
+.topbar-inner { max-width: 1440px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.app-title { font-size: 1.4rem; font-weight: 700; }
+.app-title span { color: var(--cyan); font-weight: 400; }
+.stats-bar { display: flex; gap: 16px; font-size: 0.8rem; flex-wrap: wrap; }
+.stat { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 6px; background: rgba(255,255,255,0.04); }
+.stat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* Toolbar */
+.toolbar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 12px 24px; position: sticky; top: 60px; z-index: 49; }
+.toolbar-inner { max-width: 1440px; margin: 0 auto; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.search-box { flex: 1; min-width: 200px; }
+.search-box input { width: 100%; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: var(--font); font-size: 0.95rem; }
+.search-box input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(57,208,216,0.15); }
+.filter-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.filter-group select { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: var(--font); font-size: 0.85rem; cursor: pointer; }
+
+/* Main grid */
+.main { max-width: 1440px; margin: 0 auto; padding: 24px; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }
+
+/* Lead card */
+.lead-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: all 0.2s; position: relative; }
+.lead-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+
+/* Color-coded card borders */
+.lead-card.status-contacted { border-left: 4px solid var(--yellow); }
+.lead-card.status-interested { border-left: 4px solid var(--green); }
+.lead-card.status-not-interested { border-left: 4px solid var(--red); }
+.lead-card.status-no-answer { border-left: 4px solid var(--muted); }
+.lead-card.status-done { border-left: 4px solid var(--purple); opacity: 0.6; }
+
+/* RED glow for no-website businesses */
+.lead-card.no-website { border-color: rgba(248,81,73,0.4); background: rgba(248,81,73,0.05); }
+.lead-card.no-website:hover { box-shadow: 0 4px 20px rgba(248,81,73,0.15); }
+
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.card-name { font-size: 1.05rem; font-weight: 600; line-height: 1.3; }
+.card-badges { display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0; }
+
+/* Colorful category badges */
+.badge-cat { font-size: 0.65rem; padding: 3px 8px; border-radius: 999px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
+.badge-status { font-size: 0.65rem; padding: 3px 8px; border-radius: 999px; font-weight: 600; white-space: nowrap; }
+
+/* Category colors */
+.cat-cafe,.cat-bakery,.cat-restaurant,.cat-takeaway,.cat-butcher { background: rgba(227,135,45,0.2); color: #e3872d; }
+.cat-mechanic,.cat-plumber,.cat-electrician,.cat-auto { background: rgba(57,208,216,0.15); color: #39d0d8; }
+.cat-accounting,.cat-bookkeeping,.cat-tax { background: rgba(163,113,247,0.15); color: #a371f7; }
+.cat-photography,.cat-video,.cat-media { background: rgba(248,81,73,0.15); color: #f85149; }
+.cat-health,.cat-dentist,.cat-vet,.cat-pharmacy { background: rgba(63,185,80,0.15); color: #3fb950; }
+.cat-retail,.cat-beauty,.cat-fitness { background: rgba(210,153,34,0.15); color: #d29922; }
+.cat-other { background: rgba(139,148,158,0.15); color: #8b949e; }
+
+/* No website tag */
+.badge-noweb { background: rgba(248,81,73,0.25); color: #f85149; }
+.badge-hasweb { background: rgba(63,185,80,0.15); color: #3fb950; }
+
+.card-meta { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
+.card-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card-issues { display: flex; flex-direction: column; gap: 3px; }
+.card-issue { font-size: 0.78rem; color: var(--text); padding: 4px 8px; background: rgba(57,208,216,0.06); border-radius: 6px; line-height: 1.4; }
+.card-issue::before { content: '→'; color: var(--cyan); margin-right: 6px; font-weight: 700; }
+.card-contacts { display: flex; gap: 6px; flex-wrap: wrap; }
+.contact-chip { font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; background: var(--bg); border: 1px solid var(--border); }
+.contact-chip a { color: var(--cyan); text-decoration: none; }
+
+/* Card actions row */
+.card-actions { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+.card-actions select { flex: 1; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: var(--font); font-size: 0.8rem; cursor: pointer; }
+.btn-done { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--green); background: rgba(63,185,80,0.1); color: var(--green); font-family: var(--font); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.btn-done:hover { background: var(--green); color: #000; }
+.btn-done.is-done { background: var(--green); color: #000; }
+.btn-gemini { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--purple); background: rgba(163,113,247,0.1); color: var(--purple); font-family: var(--font); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; text-decoration: none; }
+.btn-gemini:hover { background: var(--purple); color: #fff; }
+
+.card-notes { width: 100%; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: var(--font); font-size: 0.8rem; resize: vertical; min-height: 32px; }
+.card-notes::placeholder { color: var(--muted); }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; padding: 24px; }
+.modal-overlay.active { display: flex; }
+.modal { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; }
+.modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; }
+.modal h2 { font-size: 1.5rem; margin-bottom: 8px; }
+.modal .m-meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 16px; }
+.modal .m-desc { color: var(--text); line-height: 1.6; margin-bottom: 20px; }
+.modal .m-section { margin-bottom: 20px; }
+.modal .m-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--cyan); font-weight: 600; margin-bottom: 8px; }
+.modal .m-issue { padding: 8px 12px; background: rgba(57,208,216,0.06); border-radius: 8px; margin-bottom: 6px; font-size: 0.9rem; }
+.modal .m-issue::before { content: '→'; color: var(--cyan); margin-right: 8px; }
+.modal .m-contacts a { color: var(--cyan); text-decoration: underline; }
+.modal .m-website a { color: var(--purple); text-decoration: underline; }
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 1.1rem; grid-column: 1 / -1; }
+
+@media (max-width: 500px) {
+  .card-grid { grid-template-columns: 1fr; }
+  .topbar-inner { flex-direction: column; align-items: flex-start; }
+}
+
+
+:root {
+  --cyan: #e81c4f; 
+  --yellow: #f85149;
+  --red: #da3633;
+  --bg: #09090b;
+  --panel: #18181b;
+  --border: #27272a;
+  --text: #e4e4e7;
+  --muted: #a1a1aa;
+  --font: 'Outfit', sans-serif;
+}
+.app-title {
+  color: var(--text);
+}
+.app-title span {
+  color: #e81c4f;
+}
+body {
+  background: radial-gradient(circle at 50% 0%, #3f0917 0%, var(--bg) 50%);
+}
+.help-btn{padding:8px 16px;border-radius:8px;border:1px solid #e81c4f;background:rgba(232,28,79,0.1);color:#e81c4f;font-family:var(--font);font-size:0.85rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.2s;white-space:nowrap}
+.help-btn:hover{background:#e81c4f;color:#fff}
+.cat-accounting { border-color: rgba(63, 185, 80, 0.4); color: #3fb950; } /* Gov/Grants */
+.cat-cafe { border-color: rgba(248, 81, 73, 0.4); color: #f85149; } /* Commercial */
+.cat-health { border-color: rgba(88, 166, 255, 0.4); color: #58a6ff; } /* Partner */
+.cat-mechanic { border-color: rgba(210, 153, 34, 0.4); color: #d29922; } /* Construction */
+.cat-retail { border-color: rgba(163, 113, 247, 0.4); color: #a371f7; } /* Strata */
+
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <h1 class="app-title">👁️ Guardian Eye <span>Security Leads</span></h1>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <a class="help-btn" href="mailto:psy@xfer.au?subject=Guardian%20Eye%20Tracker%20Help">❓ Confused about anything?</a>
+    </div>
+  </div>
+</header>
+<div class="toolbar">
+  <div class="toolbar-inner">
+    <div class="search-box"><input type="text" id="search" placeholder="Search clients, grants, partners..." autocomplete="off"></div>
+    <div class="filter-group">
+      <select id="filter-status">
+        <option value="all">All Statuses</option>
+        <option value="new">🔵 New</option>
+        <option value="contacted">🟡 Contacted</option>
+        <option value="interested">🟢 In Progress/Pitch</option>
+        <option value="not-interested">🔴 Rejected</option>
+        <option value="no-answer">⚪ No Answer</option>
+        <option value="done">✅ Won</option>
+      </select>
+      <select id="filter-category"><option value="all">All Categories</option></select>
+      <select id="filter-contact">
+        <option value="all">All Contact Types</option>
+        <option value="direct">Has Email/Phone</option>
+        <option value="form-only">Website Only</option>
+      </select>
+    </div>
+  </div>
+</div>
+<div class="stats-bar" id="stats-bar" style="max-width:1440px;margin:0 auto;padding:12px 24px;display:flex;gap:12px;flex-wrap:wrap;font-size:0.8rem"></div>
+<main class="main" id="main"><div class="card-grid" id="card-grid"></div></main>
+<div class="modal-overlay" id="modal-overlay"><div class="modal" id="modal"><button class="modal-close" id="modal-close">&times;</button><div id="modal-content"></div></div></div>
+<script>const LEADS_SECURITY_1 = [
+{id:1,name:"WA Department of Local Government (Crime Prevention Grants)",category:"Grant / Gov",location:"WA State",phone:"(08) 6552 7300",email:"grants@dlgsc.wa.gov.au",website:"dlgsc.wa.gov.au",desc:"State government grants aimed at reducing community crime and improving safety.",issues:["Look for the State CCTV Strategy funding","Pitch AI-monitoring as a force multiplier for local councils","Can we partner with a local council to pilot our system?"]},
+{id:2,name:"City of Perth (Safe City Program)",category:"Grant / Gov",location:"Perth CBD",phone:"(08) 9461 3333",email:"safecity@cityofperth.wa.gov.au",website:"perth.wa.gov.au",desc:"Local council initiative for CBD safety, utilizing an extensive CCTV network.",issues:["Pitch our AI analytics to upgrade their existing passive CCTV","Inquire about supplier panels for security consulting","Highlight cost savings vs human monitoring"]},
+{id:3,name:"AHG (Automotive Holdings Group / Eagers)",category:"Commercial Client",location:"Perth Metro",phone:"(08) 9422 7676",email:"",website:"eagersautomotive.com.au",desc:"Massive network of car dealerships across Perth. High risk for vehicle theft and vandalism.",issues:["Car yards are prime targets for after-hours theft","Pitch AI perimeter intrusion detection (cheaper than physical guards)","Offer a free proof-of-concept on one problematic site"]},
+{id:4,name:"BGC Construction",category:"Construction",location:"Perth",phone:"(08) 6220 4800",email:"enquiries@bgc.com.au",website:"bgc.com.au",desc:"One of WA's largest builders, with numerous active residential and commercial sites.",issues:["Construction sites suffer heavy tool and copper theft","Pitch temporary AI-monitored solar CCTV skids","Highlight reduction in insurance premiums"]},
+{id:5,name:"Pindan (Projects / Successors)",category:"Construction",location:"Perth",phone:"(08) 9471 5300",email:"",website:"",desc:"Large commercial construction projects requiring site security.",issues:["Replace expensive overnight static guards with active AI monitoring","Faster police response with verified AI alarms","Site safety compliance monitoring during the day"]},
+{id:6,name:"Ausguard Security Services",category:"Partner",location:"Perth",phone:"1300 882 188",email:"info@ausguard.com.au",website:"ausguard.com.au",desc:"Local physical security and patrol company.",issues:["Partner to provide them with remote AI monitoring for their clients","They do the patrols, we do the smart monitoring","White-label our services to them"]},
+{id:7,name:"Southern Cross Protection",category:"Partner",location:"WA",phone:"1300 136 565",email:"",website:"sxprotection.com.au",desc:"National security provider with a strong WA patrol fleet.",issues:["Pitch our AI system to verify alarms before dispatching their guards","Reduces costly false alarm callouts","Strategic partnership opportunity"]},
+{id:8,name:"WA Police (Innovation & Tech Division)",category:"Grant / Gov",location:"WA",phone:"131 444",email:"",website:"police.wa.gov.au",desc:"Law enforcement agency increasingly relying on digital evidence.",issues:["Join the State CCTV Register (Cam-Map WA) to build credibility","Pitch our consulting services for smart city integration","Look for government tenders regarding AI surveillance"]},
+{id:9,name:"Strata Community Association (WA)",category:"Partner",location:"Perth",phone:"(08) 9381 7084",email:"admin.wa@strata.community",website:"wa.strata.community",desc:"Peak body for strata managers who handle large apartment complexes.",issues:["Become a corporate member/sponsor","Present at their events to educate strata managers on AI security vs expensive guards","Strata buildings suffer from mail theft and parking issues"]},
+{id:10,name:"Blackburne Property Group",category:"Strata / HOA",location:"Perth",phone:"(08) 9429 5777",email:"info@blackburne.com.au",website:"blackburne.com.au",desc:"Major developer and manager of high-end apartment complexes in Perth.",issues:["High-end apartments need premium security without the ongoing cost of 24/7 concierges","Pitch virtual concierge and AI tailgating detection","Consulting for their new builds"]},
+{id:11,name:"Finbar Group",category:"Strata / HOA",location:"Perth",phone:"(08) 6211 0700",email:"info@finbar.com.au",website:"finbar.com.au",desc:"WA's largest apartment developer.",issues:["Similar to Blackburne, target their completed buildings for CCTV upgrades","AI analytics for pool/gym area safety compliance","Lobby their strata management arm"]},
+{id:12,name:"New in Business Grant (Small Business Development Corp)",category:"Grant / Gov",location:"WA",phone:"133 140",email:"info@smallbusiness.wa.gov.au",website:"smallbusiness.wa.gov.au",desc:"State government body supporting new WA businesses.",issues:["Check for innovation or startup grants","Access free business advisory sessions to refine the B2B pitch","Networking events with other WA businesses"]},
+{id:13,name:"Innovation Booster Grant (WA Gov)",category:"Grant / Gov",location:"WA",phone:"(08) 6277 3000",email:"innovationbooster@jtsi.wa.gov.au",website:"wa.gov.au",desc:"Grants to help WA startups overcome barriers to commercialization.",issues:["Crucial grant for funding advanced AI development or patenting","Up to $40k available","Need to prove the economic benefit to WA"]},
+{id:14,name:"Bunnings Warehouse (WA Regional)",category:"Commercial Client",location:"WA",phone:"See local store",email:"",website:"bunnings.com.au",desc:"Large retail footprint with high asset value and yard storage.",issues:["Pitch AI monitoring for their outdoor garden/timber yards after hours","Shoplifting analytics","Head office is in VIC, but local loss prevention managers have sway"]},
+{id:15,name:"Harvey Norman (WA Franchises)",category:"Commercial Client",location:"Perth",phone:"",email:"",website:"harveynorman.com.au",desc:"High-value electronics retail; often individually franchised.",issues:["Target individual franchisees who bear the cost of theft","Pitch after-hours perimeter monitoring of loading docks","AI detection of loitering outside stores"]},
+{id:16,name:"GKR Transport",category:"Commercial Client",location:"Welshpool",phone:"(08) 9350 5000",email:"info@gkrtransport.com.au",website:"gkrtransport.com.au",desc:"Large logistics and freight company with massive yards.",issues:["Transport yards are targeted for fuel and freight theft","Pitch perimeter tripwires with auto-voice challenges","Much cheaper than employing night watchmen"]},
+{id:17,name:"Centurion Transport",category:"Commercial Client",location:"Perth Airport",phone:"(08) 9278 3000",email:"",website:"centurion.net.au",desc:"Major heavy haulage and logistics provider.",issues:["High-value mining equipment stored in their yards","Require highly reliable monitoring","Pitch AI tracking of unauthorized vehicles entering the yard"]},
+{id:18,name:"Security Agents Institute of WA (SAIWA)",category:"Partner",location:"WA",phone:"(08) 9427 0800",email:"admin@saiwa.asn.au",website:"saiwa.asn.au",desc:"Industry association for security professionals in WA.",issues:["Crucial for networking with established installers","Find installers who lack a monitoring control room and partner with them","Stay updated on WA security licensing laws"]},
+{id:19,name:"Crown Perth",category:"Commercial Client",location:"Burswood",phone:"(08) 9362 7777",email:"",website:"crownperth.com.au",desc:"Massive casino and hotel complex with thousands of cameras.",issues:["They have in-house monitoring, but pitch our AI analytics as an overlay tool","Facial recognition consulting (if legal/applicable)","VIP tracking or anomaly detection"]},
+{id:20,name:"City of Stirling (Security Patrols)",category:"Grant / Gov",location:"Stirling",phone:"(08) 9205 8555",email:"",website:"stirling.wa.gov.au",desc:"Local council running their own extensive security patrol fleet.",issues:["Pitch AI integration into their mobile patrol vehicles (dashcams with analytics)","Automated number plate recognition (ANPR) consulting","Reduce their patrol costs with targeted response"]},
+{id:21,name:"WesTrac",category:"Commercial Client",location:"South Guildford",phone:"1300 881 064",email:"",website:"westrac.com.au",desc:"Caterpillar heavy equipment dealer. Massive open-air inventory.",issues:["Very high value assets sitting outdoors","AI monitoring is the only cost-effective way to secure huge perimeters","Pitch thermal camera integration with AI"]},
+{id:22,name:"Spudshed (Galati Group)",category:"Commercial Client",location:"WA",phone:"(08) 9414 1166",email:"reception@galatibros.com.au",website:"spudshed.com.au",desc:"24/7 independent supermarket chain across Perth.",issues:["24/7 nature means high risk of late-night incidents","Pitch AI aggression detection or loitering alerts","Help them reduce late-night security guard headcount"]},
+{id:23,name:"WA Storage",category:"Commercial Client",location:"Various Perth",phone:"1300 000 000",email:"",website:"",desc:"Self-storage facilities are prime targets for break-ins.",issues:["Self-storage places rely heavily on CCTV but rarely monitor it live","Pitch our active monitoring to stop break-ins in progress","A major selling point for them to attract customers"]},
+{id:24,name:"KeepSafe Storage",category:"Commercial Client",location:"Balcatta / O'Connor",phone:"(08) 9424 0000",email:"info@keepsafe.com.au",website:"keepsafe.com.au",desc:"Premium self-storage provider in WA.",issues:["Target their facility managers","Pitch virtual patrols instead of paying security companies to drive by","AI tailgating detection at the main gate"]},
+{id:25,name:"Metropolitan Redevelopment Authority (DevelopmentWA)",category:"Grant / Gov",location:"Perth",phone:"(08) 6200 4000",email:"",website:"developmentwa.com.au",desc:"State government agency managing major public spaces (Yagan Square, Elizabeth Quay).",issues:["These areas have high incidents of anti-social behavior","Pitch AI analytics for crowd counting and anomaly detection","Look for tenders for smart city security upgrades"]},
+{id:26,name:"Perth Airport (Aviation Security)",category:"Commercial Client",location:"Perth",phone:"(08) 9478 8888",email:"",website:"perthairport.com.au",desc:"Critical infrastructure with massive security budgets.",issues:["Highly complex, long sales cycle","Pitch consulting for AI integration into their existing Milestone/Genetec VMS systems","Target left-luggage detection analytics"]},
+{id:27,name:"Fremantle Ports (Security)",category:"Commercial Client",location:"Fremantle",phone:"(08) 9430 4911",email:"",website:"fremantleports.com.au",desc:"Critical maritime infrastructure.",issues:["Perimeter security over water and land","Pitch maritime-specific AI (detecting small craft approaching ships)","Requires federal MSIC clearance to consult"]},
+{id:28,name:"Vocus Communications (Data Centres)",category:"Commercial Client",location:"Perth CBD / Malaga",phone:"1300 889 988",email:"",website:"vocus.com.au",desc:"Major telecommunications and data centre operator.",issues:["Data centres require the highest level of security","Pitch dual-authentication AI (facial recognition + access card)","Tailgating detection is critical for them"]},
+{id:29,name:"NextDC (P1 & P2)",category:"Commercial Client",location:"Malaga / Perth CBD",phone:"1300 698 224",email:"",website:"nextdc.com",desc:"Tier IV data centre provider.",issues:["Similar to Vocus, target their facilities management","Offer AI-driven auditing of their CCTV to ensure compliance with ISO27001","Premium clients who will pay for the best"]},
+{id:30,name:"WA Department of Education (School Security)",category:"Grant / Gov",location:"WA",phone:"(08) 9264 4111",email:"",website:"education.wa.edu.au",desc:"Manages hundreds of public schools that suffer weekend vandalism.",issues:["Schools spend millions on repairing smashed windows","Pitch AI tripwires that trigger audio warnings and alert police instantly","Huge potential to roll out across the state"]},
+{id:31,name:"Catholic Education WA",category:"Commercial Client",location:"Leederville",phone:"(08) 6380 5200",email:"",website:"cewa.edu.au",desc:"Manages private Catholic schools across the state.",issues:["Similar to public schools, but with private budgets","Pitch campus lockdown integration with AI threat detection","Target their head of risk/facilities"]},
+{id:32,name:"Multiplex WA",category:"Construction",location:"Perth",phone:"(08) 9483 0899",email:"",website:"multiplex.global",desc:"Tier 1 builder doing massive commercial towers.",issues:["Sites like the new ECU City Campus need massive security","Pitch solar AI cameras for crane blind spots and perimeter","Consulting for the final building's integrated security system"]},
+{id:33,name:"Probuild (Administrators/Successors) / Roberts Co",category:"Construction",location:"Perth",phone:"",email:"",website:"au.roberts.co",desc:"Major commercial builder.",issues:["Target their site managers directly","Offer rapid deployment of AI CCTV poles","Highlight safety benefits (detecting workers without hardhats)"]},
+{id:34,name:"Optus Stadium (VenuesLive)",category:"Commercial Client",location:"Burswood",phone:"(08) 6247 5000",email:"info@optusstadium.com.au",website:"optusstadium.com.au",desc:"60,000 seat stadium with complex security needs.",issues:["Pitch crowd density analytics and bottleneck detection","Facial recognition for banned patrons (if policy allows)","Consulting for major event security tech"]},
+{id:35,name:"RAC Arena",category:"Commercial Client",location:"Perth CBD",phone:"(08) 6365 0700",email:"",website:"racarena.com.au",desc:"Major indoor entertainment venue.",issues:["Similar to Optus Stadium, focus on crowd management","AI detection of unattended bags or aggressive behavior","Target their security manager on LinkedIn"]},
+{id:36,name:"Department of Justice WA (Prisons)",category:"Grant / Gov",location:"WA",phone:"13 67 57",email:"",website:"wa.gov.au/organisation/department-of-justice",desc:"Operates the state's prisons and youth detention centres.",issues:["Extremely high-security requirements","Pitch AI detection of drones dropping contraband over fences","Long tender process, but massive contracts"]},
+{id:37,name:"Public Transport Authority (PTA / Transperth)",category:"Grant / Gov",location:"Perth",phone:"13 62 13",email:"",website:"pta.wa.gov.au",desc:"Manages the train and bus network. Has a massive centralized CCTV control room.",issues:["Pitch consulting on upgrading their central monitoring with AI to assist operators","Detection of people on tracks or graffiti in progress","Huge existing camera network ready for AI overlay"]},
+{id:38,name:"Wilson Parking WA",category:"Commercial Client",location:"Perth",phone:"1800 727 546",email:"",website:"wilsonparking.com.au",desc:"Operates dozens of multi-story car parks.",issues:["Car parks are hotspots for vehicle break-ins and rough sleepers","Pitch AI loitering detection and automated voice warnings","Saves them hiring physical guards for every site"]},
+{id:39,name:"CPP (City of Perth Parking)",category:"Grant / Gov",location:"Perth CBD",phone:"(08) 9461 3800",email:"",website:"cityofperthparking.com.au",desc:"Council-owned parking facilities.",issues:["Similar to Wilson, but requires a council tender approach","Pitch AI to detect cars parked in ACROD bays without permits","Enhance customer safety in stairwells"]},
+{id:40,name:"AusGroup / AGC",category:"Commercial Client",location:"Kwinana",phone:"(08) 6210 4500",email:"",website:"ausgroupltd.com",desc:"Mining and oil/gas maintenance contractor with large fabrication yards.",issues:["Industrial espionage and high-value metal theft","Pitch thermal AI cameras to cover their massive Kwinana strip facilities","Integration with their existing access control"]},
+{id:41,name:"Austal Ships",category:"Commercial Client",location:"Henderson",phone:"(08) 9410 1111",email:"",website:"austal.com",desc:"Builds military and commercial vessels. Extremely high security (Defence).",issues:["They require Defence Industry Security Program (DISP) compliance","Pitch consulting to help them meet CCTV compliance for DISP","AI detection of unauthorized photography of naval vessels"]},
+{id:42,name:"Civmec",category:"Commercial Client",location:"Henderson",phone:"(08) 9437 6288",email:"",website:"civmec.com.au",desc:"Massive heavy engineering and construction facility (also does Defence work).",issues:["Huge undercover and outdoor facilities","Pitch AI forklift safety monitoring (detecting people walking near forklifts)","Perimeter security against copper thieves"]},
+{id:43,name:"Security Providers Association of Australia (SPAA)",category:"Partner",location:"National",phone:"1300 369 439",email:"",website:"spaal.com.au",desc:"National peak body for security providers.",issues:["Join to build credibility as a consultant","Network with hardware manufacturers and installers","Access to industry templates and legal advice"]},
+{id:44,name:"Challenger Institute / TAFE WA (Security Courses)",category:"Partner",location:"WA",phone:"1300 300 822",email:"",website:"southmetrotafe.wa.edu.au",desc:"Provides training for security guards and CCTV operators.",issues:["Pitch a guest lecture on the future of AI in security","Recruit top talent for your monitoring centre directly from their courses","Raise your profile as an industry expert"]},
+{id:45,name:"Seadan Security & Electronics",category:"Partner",location:"Balcatta / Belmont",phone:"(08) 9240 1000",email:"",website:"seadan.com.au",desc:"Major wholesale distributor of CCTV and alarms.",issues:["Build a relationship with their technical sales reps","They can recommend Guardian Eye as a monitoring/AI partner to their installer clients","Get trade pricing on hardware"]},
+{id:46,name:"Ness Corporation",category:"Partner",location:"Balcatta",phone:"(08) 9328 2511",email:"",website:"ness.com.au",desc:"Manufacturer and distributor of security products.",issues:["Similar to Seadan, network with their reps","Explore integration between their alarm panels and your AI platform","Co-marketing opportunities"]},
+{id:47,name:"CJD Equipment",category:"Commercial Client",location:"Guildford",phone:"1300 139 804",email:"",website:"cjd.com.au",desc:"Volvo construction equipment dealer. Massive outdoor yards.",issues:["High-value heavy machinery stored outdoors","Pitch active AI monitoring to stop diesel and battery theft","Better ROI than passive cameras"]},
+{id:48,name:"Pickles Auctions",category:"Commercial Client",location:"Bibra Lake",phone:"(08) 6104 0800",email:"",website:"pickles.com.au",desc:"Massive vehicle and industrial auction yard.",issues:["Hundreds of cars sitting in dark yards","Pitch AI tracking and perimeter defence","Offer a subscription model for monitoring the constantly changing yard layout"]},
+{id:49,name:"Manheim Auctions",category:"Commercial Client",location:"Perth Airport",phone:"(08) 9265 6666",email:"",website:"manheim.com.au",desc:"Major auto auctioneer.",issues:["Similar to Pickles, massive outdoor asset risk","Pitch remote audio challenge to scare off intruders before they break windows","Cheaper than physical patrols"]},
+{id:50,name:"Export Finance Australia (Small Business)",category:"Grant / Gov",location:"National",phone:"1800 093 724",email:"",website:"exportfinance.gov.au",desc:"Government agency helping businesses expand internationally.",issues:["If Guardian Eye's AI software can be sold overseas, apply here","They provide loans and grants for tech export","Helps fund SaaS platform expansion"]}
+];
+</script>
+<script>const LEADS_SECURITY_2 = [
+{id:51,name:"WA Department of Primary Industries (DPIRD)",category:"Grant / Gov",location:"WA",phone:"1300 374 731",email:"enquiries@dpird.wa.gov.au",website:"dpird.wa.gov.au",desc:"Government department managing agriculture and fisheries.",issues:["Farms and regional facilities suffer from machinery theft","Pitch solar AI cameras for remote asset protection","Look for regional innovation grants"]},
+{id:52,name:"Water Corporation (Facilities)",category:"Grant / Gov",location:"WA",phone:"13 13 85",email:"",website:"watercorporation.com.au",desc:"Manages dams, treatment plants, and pump stations across the state.",issues:["Critical infrastructure requiring perimeter security","Pitch AI to detect illegal dumping near catchment areas","Look for upcoming tenders on Tenders WA"]},
+{id:53,name:"Western Power",category:"Grant / Gov",location:"WA",phone:"13 10 87",email:"",website:"westernpower.com.au",desc:"State energy grid operator. Manages hundreds of substations.",issues:["Substations are prime targets for copper theft","Pitch AI tripwires that instantly alert police to fence jumpers","Saves them millions in repair costs and outages"]},
+{id:54,name:"Horizon Power",category:"Grant / Gov",location:"Regional WA",phone:"1800 267 926",email:"",website:"horizonpower.com.au",desc:"Energy provider for regional and remote WA.",issues:["Similar to Western Power, but remote sites are harder to guard","Pitch off-grid solar AI systems with satellite uplinks","Consulting on securing remote critical assets"]},
+{id:55,name:"CBRE (Facilities Management)",category:"Strata / HOA",location:"Perth CBD",phone:"(08) 9320 0000",email:"",website:"cbre.com.au",desc:"Global commercial real estate and facilities manager.",issues:["Target their facilities managers for commercial office buildings","Pitch AI tailgating detection at lobby turnstiles","Upgrade their passive CCTV to active monitoring to reduce guard headcount"]},
+{id:56,name:"JLL (Jones Lang LaSalle)",category:"Strata / HOA",location:"Perth CBD",phone:"(08) 9328 1111",email:"",website:"jll.com.au",desc:"Major commercial property manager.",issues:["Similar to CBRE, target building managers","Pitch AI analytics for identifying slip-and-fall hazards in retail spaces","Consulting on unifying security across multiple buildings"]},
+{id:57,name:"Knight Frank WA",category:"Strata / HOA",location:"Perth CBD",phone:"(08) 9220 2222",email:"",website:"knightfrank.com.au",desc:"Commercial real estate agency and property management.",issues:["Pitch virtual concierge services for their premium office buildings","AI detection of loitering in underground carparks","Saves their clients money on strata fees"]},
+{id:58,name:"Perth Mint",category:"Commercial Client",location:"East Perth",phone:"1300 650 747",email:"",website:"perthmint.com",desc:"Refines and stores billions of dollars in precious metals.",issues:["Highest security environment in WA","Pitch highly specialized AI consulting (e.g., behavioral anomaly detection)","Long sales cycle, but exceptional prestige/case study"]},
+{id:59,name:"Fiona Stanley Hospital (Facilities)",category:"Commercial Client",location:"Murdoch",phone:"(08) 6152 2222",email:"",website:"fsh.health.wa.gov.au",desc:"Massive state hospital managed largely by Serco.",issues:["Hospitals face daily violence and aggression against staff","Pitch AI aggression/shouting detection to alert security instantly","Patient wandering detection (dementia wards)"]},
+{id:60,name:"Royal Perth Hospital",category:"Grant / Gov",location:"Perth CBD",phone:"(08) 9224 2244",email:"",website:"rph.health.wa.gov.au",desc:"Inner-city trauma hospital with high security needs.",issues:["ED wait rooms are volatile","Pitch AI weapon detection or aggression analytics","Requires engaging with the WA Department of Health procurement"]},
+{id:61,name:"Serco Australia",category:"Partner",location:"WA",phone:"(08) 9429 4444",email:"",website:"serco.com/aspac",desc:"Multinational contractor managing prisons, hospitals, and transit.",issues:["Partner with them as an agile tech subcontractor for their large government bids","Pitch AI efficiency gains to help them win tenders","High barrier to entry but massive scale"]},
+{id:62,name:"MSS Security",category:"Partner",location:"Perth",phone:"(08) 9481 0550",email:"",website:"msssecurity.com.au",desc:"One of Australia's largest guarding companies.",issues:["They supply guards to aviation, health, and events","Pitch Guardian Eye as a tech overlay to make their guards more effective","White-label our AI platform to them"]},
+{id:63,name:"Secure Parking",category:"Commercial Client",location:"Perth",phone:"(08) 9321 0000",email:"",website:"secureparking.com.au",desc:"Operates dozens of commercial carparks.",issues:["Carparks are prone to vandalism and theft","Pitch remote AI monitoring with 2-way audio to yell at intruders","Replaces physical patrols and improves customer safety"]},
+{id:64,name:"Coates Hire",category:"Commercial Client",location:"Belmont",phone:"13 15 52",email:"",website:"coates.com.au",desc:"Australia's largest equipment hire company.",issues:["Huge yards full of expensive tools and generators","Pitch AI perimeter security and yard tracking","Potential to put our AI solar cameras into their hire fleet (revenue share)"]},
+{id:65,name:"Kennards Hire",category:"Commercial Client",location:"Various Perth",phone:"135 135",email:"",website:"kennards.com.au",desc:"Major equipment hire chain.",issues:["Similar to Coates, they need yard security","Pitch our system as a product they can hire out to their construction clients","Mutually beneficial partnership"]},
+{id:66,name:"BHP (Remote Operations Centre)",category:"Commercial Client",location:"Perth CBD",phone:"(08) 6224 4444",email:"",website:"bhp.com",desc:"Controls Pilbara mining operations from Perth.",issues:["Pitch AI safety monitoring for their remote mine sites (e.g., detecting fatigue or PPE compliance)","Extremely difficult to penetrate, target innovation managers on LinkedIn","Consulting on integrating their massive CCTV feeds"]},
+{id:67,name:"Rio Tinto (Operations Centre)",category:"Commercial Client",location:"Perth Airport",phone:"1800 500 500",email:"",website:"riotinto.com",desc:"Similar to BHP, remote mining operations.",issues:["Pitch AI rail-crossing monitoring or stockpile volume analysis via CCTV","Target their Perth-based tech and innovation teams","Massive budgets for safety tech"]},
+{id:68,name:"Roy Hill (ROC)",category:"Commercial Client",location:"Perth Airport",phone:"(08) 9422 8111",email:"",website:"royhill.com.au",desc:"Mining company known for rapidly adopting new tech.",issues:["More agile than BHP/Rio","Pitch AI truck driver fatigue detection or conveyor belt monitoring","Great target for advanced AI security consulting"]},
+{id:69,name:"Local Government Professionals WA",category:"Partner",location:"WA",phone:"(08) 9271 1166",email:"admin@lgprowa.net.au",website:"lgprowa.net.au",desc:"Network of local government officers.",issues:["Attend their conferences to network with council CEOs and Rangers","Pitch smart city CCTV solutions and illegal dumping detection","Build relationships before tenders are released"]},
+{id:70,name:"WALGA (WA Local Government Association)",category:"Partner",location:"Perth",phone:"(08) 9213 2000",email:"info@walga.asn.au",website:"walga.asn.au",desc:"Peak body representing WA councils.",issues:["Get on their 'Preferred Supplier Panel' for security/IT services","This allows councils to buy from you without going to public tender","Crucial step for scaling in the gov sector"]},
+{id:71,name:"Main Roads WA",category:"Grant / Gov",location:"WA",phone:"138 138",email:"enquiries@mainroads.wa.gov.au",website:"mainroads.wa.gov.au",desc:"Manages the state highway network and thousands of traffic cameras.",issues:["Pitch AI analytics on their existing feeds (e.g., detecting stopped vehicles, debris, wrong-way drivers)","Consulting for their Perth traffic operations centre","Massive infrastructure opportunity"]},
+{id:72,name:"Midland Brick (BGC)",category:"Commercial Client",location:"Middle Swan",phone:"13 15 40",email:"",website:"midlandbrick.com.au",desc:"Massive manufacturing site in the Swan Valley.",issues:["Huge, sprawling perimeter that is hard to fence securely","Pitch AI thermal cameras to detect intruders at night","Cheaper than fixing cut fences and stolen copper"]},
+{id:73,name:"CSBP (Wesfarmers Chemicals)",category:"Commercial Client",location:"Kwinana",phone:"(08) 9411 8777",email:"",website:"csbp.com.au",desc:"Fertilizer and chemical manufacturing plant.",issues:["Major Hazard Facility (MHF) with strict security laws","Pitch AI safety monitoring (e.g., detecting leaks or unauthorized access to restricted zones)","Premium consulting opportunity"]},
+{id:74,name:"Alcoa (Kwinana/Pinjarra)",category:"Commercial Client",location:"WA South West",phone:"(08) 9316 5111",email:"",website:"alcoa.com/australia",desc:"Alumina refineries with massive footprints.",issues:["Similar to CSBP, focus on safety and perimeter intrusion","Pitch AI monitoring of remote conveyor belts for fires/jams","Target their regional security managers"]},
+{id:75,name:"Perth Zoo",category:"Grant / Gov",location:"South Perth",phone:"(08) 9474 0444",email:"",website:"perthzoo.wa.gov.au",desc:"Major tourist attraction managed by DBCA.",issues:["Pitch AI to detect visitors climbing into enclosures","After-hours perimeter security","Look for State Government tenders"]},
+{id:76,name:"WA Museum Boola Bardip",category:"Grant / Gov",location:"Perth CBD",phone:"1300 134 081",email:"",website:"visit.museum.wa.gov.au",desc:"New, highly valuable state museum.",issues:["High-value artifacts requiring sophisticated monitoring","Pitch AI loitering or unattended baggage detection","Consulting for future temporary exhibitions"]},
+{id:77,name:"Department of Finance (Building Management and Works)",category:"Grant / Gov",location:"WA",phone:"(08) 6551 1000",email:"",website:"wa.gov.au/organisation/department-of-finance",desc:"Manages security and maintenance for all WA government buildings.",issues:["The ultimate gatekeeper for state gov security contracts","Register on Tenders WA and monitor their releases","Pitch AI to reduce the state's security guard spend"]},
+{id:78,name:"HBF Stadium / VenuesWest",category:"Grant / Gov",location:"Mount Claremont",phone:"(08) 9441 8222",email:"",website:"venueswest.wa.gov.au",desc:"State agency managing major sporting venues.",issues:["Pitch crowd analytics and automated safety alerts for pool areas (drowning detection)","After-hours vandalism protection","Target the VenuesWest facilities team"]},
+{id:79,name:"Synergy (Power Stations)",category:"Grant / Gov",location:"Muja / Collie / Kwinana",phone:"13 13 53",email:"",website:"synergy.net.au",desc:"State power generation facilities.",issues:["Critical infrastructure protection","Pitch AI thermal monitoring for early fire detection in coal/biomass stockpiles","High-end consulting opportunity"]},
+{id:80,name:"Coles (WA Distribution Centre)",category:"Commercial Client",location:"Perth Airport",phone:"",email:"",website:"colesgroup.com.au",desc:"Massive automated warehouse facility.",issues:["Loss prevention and logistics tracking","Pitch AI to track pallets or detect OH&S violations (e.g., no hi-vis)","Target national loss prevention managers"]},
+{id:81,name:"Woolworths (WA Regional DC)",category:"Commercial Client",location:"Perth Airport",phone:"",email:"",website:"woolworthsgroup.com.au",desc:"Similar to Coles, massive logistics hub.",issues:["Pitch AI temperature monitoring integration (for cold chain) via CCTV","Perimeter security for the truck yards","Truck turnaround time analytics"]},
+{id:82,name:"ALDI (Jandakot DC)",category:"Commercial Client",location:"Jandakot",phone:"",email:"",website:"aldi.com.au",desc:"Major distribution centre for ALDI stores in WA.",issues:["Target their logistics and security managers","Pitch AI dock door management (detecting when doors are left open)","Yard management analytics"]},
+{id:83,name:"Linfox",category:"Commercial Client",location:"Hazelmere",phone:"(08) 9376 9999",email:"",website:"linfox.com",desc:"Massive logistics and freight company.",issues:["Freight theft and yard security are major concerns","Pitch AI virtual guards to secure their perimeters at a fraction of the cost of physical guards","National rollout potential if successful in WA"]},
+{id:84,name:"Toll Group",category:"Commercial Client",location:"Perth Airport",phone:"13 15 31",email:"",website:"tollgroup.com",desc:"Global logistics provider with huge WA operations.",issues:["High-value freight handling","Pitch AI parcel tracking or loss prevention analytics","Target their WA operations director"]},
+{id:85,name:"Qantas (Perth Domestic/International)",category:"Commercial Client",location:"Perth Airport",phone:"13 13 13",email:"",website:"qantas.com",desc:"Major airline with extensive hangars and baggage areas.",issues:["Aviation security is highly regulated","Pitch AI tarmac safety monitoring (e.g., vehicle speeding near aircraft)","Consulting for their corporate security team"]},
+{id:86,name:"Virgin Australia (Perth Operations)",category:"Commercial Client",location:"Perth Airport",phone:"",email:"",website:"virginaustralia.com",desc:"Airline operations and maintenance hangars.",issues:["Similar to Qantas, focus on safety and asset protection","Pitch AI detection of unauthorized access to restricted hangar zones","Baggage theft analytics"]},
+{id:87,name:"WA Return Recycle Renew (WARRRL)",category:"Grant / Gov",location:"WA",phone:"133 227",email:"info@warrrl.com.au",website:"containersforchange.com.au/wa",desc:"Manages the 'Containers for Change' recycling scheme.",issues:["Hundreds of refund points across WA with cash on premises","Pitch a unified AI security platform for all their franchisees","Detecting fraud or break-ins at refund points"]},
+{id:88,name:"Cleanaway",category:"Commercial Client",location:"Malaga / Bayswater",phone:"13 13 39",email:"",website:"cleanaway.com.au",desc:"Massive waste management and recycling facilities.",issues:["Recycling plants are at extreme risk of fire","Pitch thermal AI cameras for early fire/hotspot detection","Essential safety tech that pays for itself by preventing disasters"]},
+{id:89,name:"Suez (Veolia) Waste Management",category:"Commercial Client",location:"Bibra Lake",phone:"13 13 35",email:"",website:"veolia.com/anz",desc:"Major waste and water management company.",issues:["Similar to Cleanaway, fire risk in waste sorting facilities is huge","Pitch AI thermal monitoring and OH&S compliance tracking","Target their state safety manager"]},
+{id:90,name:"BINGO Industries",category:"Commercial Client",location:"WA",phone:"1300 424 646",email:"",website:"bingoindustries.com.au",desc:"Commercial waste management.",issues:["Skip bin yards and recycling centres","Pitch perimeter security to stop illegal dumping","AI fire detection"]},
+{id:91,name:"Gold Corporation (The Perth Mint)",category:"Grant / Gov",location:"Perth",phone:"(08) 9421 7222",email:"",website:"perthmint.com",desc:"State-owned entity. (Listed earlier as Commercial, but acts as Gov).",issues:["Reiterating the high-value consulting opportunity","Pitch auditing of their existing AI/CCTV systems","Requires high-level security clearances"]},
+{id:92,name:"Fremantle Prison (Heritage)",category:"Grant / Gov",location:"Fremantle",phone:"(08) 9336 9200",email:"",website:"fremantleprison.com.au",desc:"UNESCO World Heritage site and major tourist attraction.",issues:["Heritage sites are difficult to wire for new CCTV","Pitch wireless/solar AI cameras to monitor for vandalism without damaging the buildings","Consulting on heritage-compliant security"]},
+{id:93,name:"Kings Park (Botanic Gardens and Parks Authority)",category:"Grant / Gov",location:"Perth",phone:"(08) 9480 3600",email:"enquiries@bgpa.wa.gov.au",website:"bgpa.wa.gov.au",desc:"Massive urban park with memorials and high tourist traffic.",issues:["Pitch AI for bushfire detection using thermal cameras","Crowd counting for major events (Anzac Day)","ANPR for park access roads to deter hoons"]},
+{id:94,name:"Rottnest Island Authority",category:"Grant / Gov",location:"Rottnest Island",phone:"(08) 9432 9300",email:"",website:"rottnestisland.com",desc:"Manages the A-Class reserve and tourist destination.",issues:["Remote island logistics","Pitch off-grid solar AI cameras for remote bays to monitor vessel compliance","AI detection of quokka interactions/abuse"]},
+{id:95,name:"Cyber Security Cooperative Research Centre (CSCRC)",category:"Grant / Gov",location:"Joondalup (ECU)",phone:"(08) 6304 2222",email:"",website:"cybersecuritycrc.org.au",desc:"Government-funded research centre.",issues:["Partner for R&D grants regarding the cybersecurity of IoT CCTV cameras","Pitch Guardian Eye as an industry partner for research projects","Boosts credibility immensely"]},
+{id:96,name:"AustCyber (WA Innovation Hub)",category:"Grant / Gov",location:"Joondalup",phone:"",email:"wa@austcyber.com",website:"austcyber.com",desc:"Federal initiative growing the Australian cyber security industry.",issues:["Access networking, mentoring, and grant opportunities","Pitch your secure, locally-hosted AI monitoring as a sovereign capability","Great for B2B connections"]},
+{id:97,name:"Edith Cowan University (Security Research Institute)",category:"Partner",location:"Joondalup",phone:"(08) 6304 5322",email:"secri@ecu.edu.au",website:"ecu.edu.au",desc:"World-leading security and cyber research institute.",issues:["Partner for testing your AI algorithms","Recruit top cyber and AI graduates","Collaborate on government grant applications"]},
+{id:98,name:"Curtin University (Facilities)",category:"Commercial Client",location:"Bentley",phone:"(08) 9266 9266",email:"",website:"curtin.edu.au",desc:"Massive university campus behaving like a small city.",issues:["Pitch AI smart-campus integration","Detecting unattended bags, crowd bottlenecks, or tailgating into labs","Target the Director of Campus Operations"]},
+{id:99,name:"UWA (Security Services)",category:"Commercial Client",location:"Crawley",phone:"(08) 6488 2222",email:"",website:"uwa.edu.au",desc:"Historic campus with complex security needs.",issues:["Similar to Curtin, pitch AI overlay for their existing control room","Reduce the need for physical night patrols along the riverfront","Bicycle theft analytics"]},
+{id:100,name:"Murdoch University (Security)",category:"Commercial Client",location:"Murdoch",phone:"(08) 9360 6000",email:"",website:"murdoch.edu.au",desc:"Large sprawling campus.",issues:["Pitch solar AI cameras for their large, unlit car parks","Virtual escort services using AI tracking for students walking at night","Enhance their student safety app"]}
+];
+</script>
+<script>const LEADS_SECURITY_3 = [
+{id:101,name:"Westfield (Scentre Group) - Carousel/Booragoon",category:"Commercial Client",location:"Perth",phone:"(08) 9458 0900",email:"",website:"scentregroup.com",desc:"Major shopping centre operator.",issues:["Shopping centres deal with daily retail theft, assault, and slips","Pitch AI slip-and-fall detection to reduce insurance claims","Loitering detection in carparks and loading docks"]},
+{id:102,name:"Vicinity Centres (DFO Perth/Mandurah Forum)",category:"Commercial Client",location:"Perth",phone:"(08) 6147 1000",email:"",website:"vicinity.com.au",desc:"Large retail property group.",issues:["Similar to Scentre Group, target the Centre Manager or Security Manager","Pitch crowd density analytics to optimize cleaning and security patrols","Automated alerts for aggressive behavior"]},
+{id:103,name:"Lendlease (Retail/Commercial)",category:"Commercial Client",location:"Perth",phone:"(08) 9364 0000",email:"",website:"lendlease.com",desc:"Global property and infrastructure group.",issues:["They build and manage assets","Pitch consulting for 'security by design' in their new developments","AI analytics for their existing retail assets"]},
+{id:104,name:"Perron Group (Belmont Forum)",category:"Commercial Client",location:"Belmont",phone:"(08) 9478 2152",email:"",website:"perrongroup.com.au",desc:"WA-based property group owning major shopping centres.",issues:["Target their asset managers","Pitch AI to upgrade their legacy CCTV systems without replacing the cameras","Focus on reducing ongoing guard costs"]},
+{id:105,name:"Hawaiian Group (Claremont Quarter/Bassendean)",category:"Commercial Client",location:"Perth",phone:"(08) 9426 8888",email:"info@hawaiian.com.au",website:"hawaiian.com.au",desc:"WA property group focusing on community shopping centres.",issues:["Pitch localized AI security for their suburban centres","Graffiti detection in progress","Integration with their community-focused brand (safety first)"]},
+{id:106,name:"BGC Housing Group",category:"Construction",location:"Perth",phone:"(08) 6220 4800",email:"",website:"bgchousinggroup.com.au",desc:"Massive residential builder.",issues:["Residential sites suffer from brick, timber, and hot water system theft","Pitch rapid-deployment solar AI cameras for residential sites","Offer a volume discount for monitoring 50+ sites"]},
+{id:107,name:"ABN Group (Homebuyers Centre / Dale Alcock)",category:"Construction",location:"Perth",phone:"(08) 9200 4500",email:"",website:"abngroup.com.au",desc:"Another of WA's largest residential builders.",issues:["Similar to BGC, theft causes massive delays to builds","Pitch our AI cameras as an insurance policy against delays","Target their construction managers"]},
+{id:108,name:"Summit Homes Group",category:"Construction",location:"Myaree",phone:"(08) 9317 0141",email:"",website:"summithomesgroup.com.au",desc:"Prominent WA residential builder.",issues:["Residential theft is a constant headache","Pitch the deterrent effect of 2-way audio challenges via the AI camera","Provide time-lapse marketing videos as a free bonus of the CCTV"]},
+{id:109,name:"Dan Murphy's (Endeavour Group WA)",category:"Commercial Client",location:"Perth",phone:"",email:"",website:"endeavourgroup.com.au",desc:"Large format liquor retailer.",issues:["Liquor stores face high volumes of organized theft and aggression","Pitch facial recognition (if legal) to detect known offenders entering the store","AI detection of staff abuse"]},
+{id:110,name:"BWS (WA Regional)",category:"Commercial Client",location:"WA",phone:"",email:"",website:"bws.com.au",desc:"Smaller format liquor stores, often attached to Woolworths.",issues:["Often single-staffed at night, vulnerable to robbery","Pitch AI panic alerts or aggression detection","Integration with the main Woolworths security desk"]},
+{id:111,name:"Liquor Barons",category:"Commercial Client",location:"WA",phone:"(08) 9384 1522",email:"admin@liquorbarons.com.au",website:"liquorbarons.com.au",desc:"WA independent liquor cooperative.",issues:["Target individual store owners who feel the pain of theft directly","Pitch an affordable monthly subscription for AI monitoring","Cheaper than a physical guard on Thursday/Friday nights"]},
+{id:112,name:"BP Australia (WA Roadhouses)",category:"Commercial Client",location:"WA",phone:"1300 130 027",email:"",website:"bp.com.au",desc:"Service stations are high-risk environments.",issues:["Fuel drive-offs and late-night armed robberies","Pitch AI ANPR (Automatic Number Plate Recognition) for instant alerts on stolen plates","Loitering detection near the night-pay window"]},
+{id:113,name:"Ampol (WA Operations)",category:"Commercial Client",location:"WA",phone:"1300 366 434",email:"",website:"ampol.com.au",desc:"Major service station network.",issues:["Similar to BP, focus on loss prevention and staff safety","Pitch AI to detect if a pump is left on the ground (fire hazard)","Smoke detection near bowsers"]},
+{id:114,name:"7-Eleven WA",category:"Commercial Client",location:"WA",phone:"",email:"",website:"7eleven.com.au",desc:"24/7 convenience stores.",issues:["Target franchisees","24/7 nature requires constant vigilance","Pitch AI to detect aggressive gestures or weapons drawn"]},
+{id:115,name:"McDonald's WA (Head Office / Franchisees)",category:"Commercial Client",location:"Perth",phone:"(08) 9422 6600",email:"",website:"mcdonalds.com.au",desc:"High volume, late-night fast food.",issues:["Late-night drive-thrus are hotspots for anti-social behavior","Pitch AI to detect loitering in the carpark or aggression in the lobby","Target large multi-store franchisees"]},
+{id:116,name:"Hungry Jack's WA",category:"Commercial Client",location:"WA",phone:"",email:"",website:"hungryjacks.com.au",desc:"Fast food chain with many late-night stores.",issues:["Similar to McDonald's, focus on staff safety and carpark security","Pitch ANPR to measure drive-thru wait times (operational efficiency added value)"]},
+{id:117,name:"Crown Equipment (Forklifts)",category:"Commercial Client",location:"Kewdale",phone:"1300 323 410",email:"",website:"crown.com/en-au",desc:"Major forklift sales and hire.",issues:["Huge outdoor yards full of expensive assets","Pitch perimeter tripwires with strobe/audio alerts","Preventing theft of batteries and gas bottles"]},
+{id:118,name:"Toyota Material Handling",category:"Commercial Client",location:"Kewdale",phone:"1800 425 438",email:"",website:"toyotamaterialhandling.com.au",desc:"Forklift and heavy machinery.",issues:["Similar to Crown, yard security is paramount","Pitch virtual guard services","Much more cost-effective than physical patrols"]},
+{id:119,name:"WA Department of Transport (DoT)",category:"Grant / Gov",location:"WA",phone:"13 11 56",email:"",website:"transport.wa.gov.au",desc:"Manages licensing centres and marine infrastructure.",issues:["Licensing centres experience high customer aggression","Boat harbours (Hillarys, Fremantle) suffer from marine theft","Pitch AI monitoring of boat ramps and jetties"]},
+{id:120,name:"Hillarys Boat Harbour (DoT)",category:"Grant / Gov",location:"Hillarys",phone:"(08) 9439 5000",email:"",website:"hillarysboatharbour.com.au",desc:"Major marina and tourist precinct.",issues:["Pitch AI detection of unauthorized vessels entering pens at night","Slip and fall detection on boardwalks","Crowd control analytics for summer weekends"]},
+{id:121,name:"Fremantle Fishing Boat Harbour",category:"Grant / Gov",location:"Fremantle",phone:"(08) 9432 9999",email:"",website:"transport.wa.gov.au",desc:"Commercial and recreational harbour.",issues:["High-value commercial fishing assets","Pitch thermal cameras for perimeter defence over water","Detecting people swimming in restricted areas"]},
+{id:122,name:"Synergy (Corporate Office)",category:"Commercial Client",location:"Perth CBD",phone:"(08) 6282 7000",email:"",website:"synergy.net.au",desc:"Corporate headquarters for the state power provider.",issues:["Pitch high-end corporate security consulting","Integration of access control with AI CCTV","Tailgating detection at elevators"]},
+{id:123,name:"Woodside Energy (Mia Yellagonga)",category:"Commercial Client",location:"Perth CBD",phone:"(08) 9348 4000",email:"",website:"woodside.com",desc:"Massive, highly secure corporate headquarters.",issues:["One of the most secure civilian buildings in Perth","Pitch niche AI consulting (e.g., advanced facial recognition or drone detection)","Must be highly professional, long sales cycle"]},
+{id:124,name:"Chevron (QV1 / One The Esplanade)",category:"Commercial Client",location:"Perth CBD",phone:"(08) 9216 4000",email:"",website:"chevron.com",desc:"Major corporate offices.",issues:["Similar to Woodside, extreme corporate security","Pitch auditing of their existing global security standards","Target their APAC Security Director"]},
+{id:125,name:"South32 (Corporate)",category:"Commercial Client",location:"Perth CBD",phone:"(08) 9324 9000",email:"",website:"south32.net",desc:"Mining giant headquarters.",issues:["Corporate security and risk management","Pitch intelligence gathering or OSINT consulting alongside physical AI security","Executive protection consulting"]},
+{id:126,name:"Mineral Resources (MinRes) HQ",category:"Commercial Client",location:"Osborne Park",phone:"(08) 9329 3600",email:"",website:"mineralresources.com.au",desc:"Massive new corporate headquarters.",issues:["Highly innovative company, likely open to cutting-edge AI","Pitch advanced workplace analytics (e.g., desk utilization via CCTV)","Perimeter security for their Osborne Park campus"]},
+{id:127,name:"Fortescue (Corporate)",category:"Commercial Client",location:"East Perth",phone:"(08) 6218 8888",email:"",website:"fmgl.com.au",desc:"Corporate HQ.",issues:["Pitch integration of their corporate CCTV with their remote mine site monitoring","Unified AI platform consulting","Target their physical security leads"]},
+{id:128,name:"Goldfields (St Ives / Granny Smith)",category:"Commercial Client",location:"West Perth (HQ)",phone:"(08) 9211 9200",email:"",website:"goldfields.com",desc:"Major gold mining company.",issues:["Gold mines have the highest security requirements in the resources sector","Pitch AI detection of 'high grading' (theft of gold-bearing rock)","Consulting on searching and screening protocols"]},
+{id:129,name:"Northern Star Resources",category:"Commercial Client",location:"Subiaco (HQ)",phone:"(08) 6188 2100",email:"",website:"nsrltd.com",desc:"Top-tier gold miner.",issues:["Similar to Goldfields, extreme focus on loss prevention","Pitch thermal AI for perimeter defense of remote gold rooms","Requires serious industry credibility"]},
+{id:130,name:"AngloGold Ashanti",category:"Commercial Client",location:"Perth CBD (HQ)",phone:"(08) 9425 4600",email:"",website:"anglogoldashanti.com",desc:"Global gold miner.",issues:["Corporate and mine site security","Pitch advanced AI analytics for mill and refinery safety","Target their regional security manager"]},
+{id:131,name:"Newmont Australia",category:"Commercial Client",location:"Subiaco (HQ)",phone:"(08) 9423 6100",email:"",website:"newmont.com",desc:"Massive global gold producer (Boddington mine).",issues:["Pitch AI safety systems (e.g., detecting if a worker enters a dangerous exclusion zone)","Security is often driven by safety in tier-1 mining","Consulting on global standards"]},
+{id:132,name:"Ausdrill (Perenti)",category:"Commercial Client",location:"Canning Vale",phone:"(08) 9311 5666",email:"",website:"perentigroup.com",desc:"Global mining services company.",issues:["Huge fabrication and equipment yards in Canning Vale","Pitch AI perimeter security","Protecting explosives transport vehicles (highly regulated)"]},
+{id:133,name:"Macmahon Holdings",category:"Commercial Client",location:"Perth Airport",phone:"(08) 9232 1000",email:"",website:"macmahon.com.au",desc:"Mining contractor.",issues:["Similar to Ausdrill, focus on yard security and asset protection","Pitch solar AI skids for their temporary regional camps","Target logistics and facilities managers"]},
+{id:134,name:"Thiess (WA)",category:"Commercial Client",location:"Perth",phone:"(08) 9214 4200",email:"",website:"thiess.com",desc:"Global mining contractor.",issues:["Temporary site security","Pitch rapidly deployable AI monitoring towers","Cheaper and more reliable than remote guarding"]},
+{id:135,name:"Byrnecut",category:"Commercial Client",location:"Belmont",phone:"(08) 9373 2600",email:"info@byrnecut.com.au",website:"byrnecut.com.au",desc:"Underground mining contractor.",issues:["Yard security in Belmont","Underground safety consulting (e.g., using AI to track personnel underground via tagging/CCTV)","Highly specialized niche"]},
+{id:136,name:"Barminco (Perenti)",category:"Commercial Client",location:"Hazelmere",phone:"(08) 9416 1000",email:"",website:"barminco.com.au",desc:"Underground mining contractor.",issues:["Similar to Byrnecut, target their logistics yards in Hazelmere","Pitch thermal AI for their maintenance sheds to detect engine fires early","Consulting on remote safety monitoring"]},
+{id:137,name:"EGR Group",category:"Commercial Client",location:"Various",phone:"",email:"",website:"egrgroup.com",desc:"Manufacturing. (Example of a large manufacturer).",issues:["Factories have high OH&S risks","Pitch AI detection of workers not wearing PPE (hard hats, vests)","Perimeter security for their warehouses"]},
+{id:138,name:"Cullity Timber (Laminex WA)",category:"Commercial Client",location:"Dardanup / Perth",phone:"",email:"",website:"laminex.com.au",desc:"Large timber processing and manufacturing.",issues:["Timber yards are massive fire risks","Pitch thermal AI cameras specifically for early fire detection","A single saved fire pays for the system 100x over"]},
+{id:139,name:"Bunnings Timber Mills",category:"Commercial Client",location:"WA South West",phone:"",email:"",website:"",desc:"WA timber operations.",issues:["Similar to Cullity, fire is the biggest threat","Pitch AI thermal monitoring","Security against eco-activist trespassing"]},
+{id:140,name:"CBH Group",category:"Commercial Client",location:"West Perth (HQ) / Regional WA",phone:"(08) 9237 9600",email:"info@cbh.com.au",website:"cbh.com.au",desc:"Massive grain grower's cooperative. Hundreds of regional receival sites.",issues:["Critical food infrastructure","Grain silos are prone to dust explosions (fire risk) and vandalism","Pitch solar-powered AI cameras for their hundreds of unmanned regional bins"]},
+{id:141,name:"GrainCorp (WA Operations)",category:"Commercial Client",location:"WA",phone:"1800 809 482",email:"",website:"graincorp.com.au",desc:"Grain handling and logistics.",issues:["Similar to CBH, focus on remote asset protection","Pitch AI monitoring of train loading facilities","Target their regional operations managers"]},
+{id:142,name:"Fletcher Building (Laminex/Tradelink WA)",category:"Commercial Client",location:"WA",phone:"",email:"",website:"fletcherbuilding.com",desc:"Major building supplies conglomerate.",issues:["Warehouses and retail storefronts","Pitch unified AI monitoring across all their WA brands","Reduce loss prevention headcount"]},
+{id:143,name:"Reece Plumbing (WA)",category:"Commercial Client",location:"WA",phone:"",email:"",website:"reece.com.au",desc:"Major plumbing supply chain.",issues:["Copper piping and hot water systems are highly targeted by thieves","Pitch AI perimeter security for their store yards","Target state loss prevention manager"]},
+{id:144,name:"Tradelink (WA)",category:"Commercial Client",location:"WA",phone:"",email:"",website:"tradelink.com.au",desc:"Plumbing supplies.",issues:["Similar to Reece, target copper theft","Pitch remote 2-way audio to deter thieves before they cut the fence","Affordable monthly SaaS model"]},
+{id:145,name:"Galvins Plumbing Supplies",category:"Commercial Client",location:"Osborne Park",phone:"(08) 9446 5644",email:"sales@galvins.com.au",website:"galvins.com.au",desc:"WA family-owned plumbing supplier.",issues:["Target the owners directly","Pitch AI as a way to protect their livelihood from theft","Emphasize local WA support (Guardian Eye) vs national giants"]},
+{id:146,name:"Samios Plumbing Supplies",category:"Commercial Client",location:"WA",phone:"",email:"",website:"samios.net.au",desc:"Plumbing supplies.",issues:["Yard security","AI detection of unauthorized vehicles after hours","Integration with their alarm systems"]},
+{id:147,name:"Middendorp Electric (Middy's)",category:"Commercial Client",location:"WA",phone:"",email:"",website:"middys.com.au",desc:"Electrical wholesaler.",issues:["Copper wire is the #1 target for thieves","Pitch intense yard security with AI verification","No false alarms for the police"]},
+{id:148,name:"Cetnaj (WA)",category:"Commercial Client",location:"WA",phone:"",email:"",website:"cetnaj.com.au",desc:"Electrical wholesaler.",issues:["Similar to Middy's, copper theft","Pitch AI monitoring as cheaper than insurance excess payouts","Target regional managers"]},
+{id:149,name:"Haymans Electrical",category:"Commercial Client",location:"WA",phone:"",email:"",website:"haymans.com.au",desc:"Electrical wholesaler.",issues:["High-value inventory","Pitch AI loitering detection at the front door to prevent ram-raids","Video verification of alarm events"]},
+{id:150,name:"City Farmers / Petbarn (WA)",category:"Commercial Client",location:"WA",phone:"",email:"",website:"petbarn.com.au",desc:"Large format retail.",issues:["Shoplifting and break-ins","Pitch AI analytics for retail heat-mapping (added value) and aggression detection","Target state operations managers"]}
+];
+</script>
+<script>const LEADS_SECURITY_4 = [
+{id:151,name:"Kmart (WA Stores)",category:"Commercial Client",location:"WA",phone:"",email:"",website:"kmart.com.au",desc:"Massive retail footprint, very high foot traffic.",issues:["Major issues with shrinkage/shoplifting","Pitch AI POS (Point of Sale) integration to detect sweet-hearting or unscanned items","Loitering detection in self-checkout areas"]},
+{id:152,name:"Target (WA Stores)",category:"Commercial Client",location:"WA",phone:"",email:"",website:"target.com.au",desc:"Similar to Kmart.",issues:["Focus on loss prevention","Pitch AI as a force multiplier for their existing LP officers","Detecting organized retail crime gangs"]},
+{id:153,name:"Big W (WA Stores)",category:"Commercial Client",location:"WA",phone:"",email:"",website:"bigw.com.au",desc:"Woolworths group retail.",issues:["Retail theft analytics","Pitch integration with their existing CCTV to upgrade it to 'smart' cameras","Target state LP manager"]},
+{id:154,name:"Officeworks (WA Stores)",category:"Commercial Client",location:"WA",phone:"",email:"",website:"officeworks.com.au",desc:"High-value electronics and stationery retail.",issues:["High-value Apple/tech products are heavily targeted","Pitch AI facial recognition for repeat offenders (if policy allows)","Perimeter security for rear loading docks"]},
+{id:155,name:"JB Hi-Fi (WA)",category:"Commercial Client",location:"WA",phone:"",email:"",website:"jbhifi.com.au",desc:"High-value electronics retail.",issues:["Extreme shrinkage risk","Pitch AI tracking of high-value items","Aggression detection for staff safety"]},
+{id:156,name:"Good Guys (WA)",category:"Commercial Client",location:"WA",phone:"",email:"",website:"thegoodguys.com.au",desc:"Whitegoods and electronics.",issues:["Similar to JB Hi-Fi, focus on loading dock security","AI detection of vehicles lingering near the rear doors","Store intrusion detection"]},
+{id:157,name:"Auto One (WA Franchises)",category:"Commercial Client",location:"WA",phone:"",email:"",website:"autoone.com.au",desc:"Auto parts retailer.",issues:["Target franchisees","Pitch AI to protect their expensive stock (batteries, tools)","Affordable SaaS model for small business owners"]},
+{id:158,name:"Repco (WA)",category:"Commercial Client",location:"WA",phone:"",email:"",website:"repco.com.au",desc:"Major auto parts chain.",issues:["Similar to Auto One","Pitch integration with their alarm systems for video verification","Reduces false alarm callout fees"]},
+{id:159,name:"Supercheap Auto (WA)",category:"Commercial Client",location:"WA",phone:"",email:"",website:"supercheapauto.com.au",desc:"Auto parts and accessories.",issues:["High volume of shoplifting","Pitch AI analytics to track customer flow and identify blind spots","Loading dock security"]},
+{id:160,name:"City of Joondalup (Community Safety)",category:"Grant / Gov",location:"Joondalup",phone:"(08) 9400 4000",email:"info@joondalup.wa.gov.au",website:"joondalup.wa.gov.au",desc:"Large northern council with extensive CCTV network.",issues:["Pitch AI integration into their existing 'CityWatch' program","Look for smart city innovation grants","ANPR for detecting hoons in coastal carparks"]},
+{id:161,name:"City of Wanneroo (Community Safety)",category:"Grant / Gov",location:"Wanneroo",phone:"(08) 9405 5000",email:"enquiries@wanneroo.wa.gov.au",website:"wanneroo.wa.gov.au",desc:"Rapidly growing outer-suburban council.",issues:["High rates of illegal dumping in new estates","Pitch covert AI cameras to catch dumpers and read license plates","Saves council massive clean-up costs"]},
+{id:162,name:"City of Swan (Security)",category:"Grant / Gov",location:"Midland",phone:"(08) 9267 9267",email:"swan@swan.wa.gov.au",website:"swan.wa.gov.au",desc:"Largest geographical council in Perth metro.",issues:["Massive area to patrol","Pitch AI analytics for remote parks and facilities to reduce patrol driving time","Graffiti detection in Midland"]},
+{id:163,name:"City of Rockingham (Safety)",category:"Grant / Gov",location:"Rockingham",phone:"(08) 9528 0333",email:"customer@rockingham.wa.gov.au",website:"rockingham.wa.gov.au",desc:"Coastal southern council.",issues:["Foreshore safety and anti-social behavior","Pitch AI loitering and aggression detection for the foreshore precinct","Look for federal 'Safer Communities' grant partnerships"]},
+{id:164,name:"City of Mandurah (Security)",category:"Grant / Gov",location:"Mandurah",phone:"(08) 9550 3777",email:"council@mandurah.wa.gov.au",website:"mandurah.wa.gov.au",desc:"Major regional/outer-metro city.",issues:["Similar to Rockingham, foreshore and nightlife security","Pitch AI crowd counting for the Crab Fest","Integration with local police feeds"]},
+{id:165,name:"Federal 'Safer Communities Fund' (Gov)",category:"Grant / Gov",location:"National",phone:"13 28 46",email:"",website:"business.gov.au",desc:"Federal grants for local councils and community organizations to improve security.",issues:["Partner with a local council or school to apply for this grant together","We provide the AI tech, they get the funding","Highly lucrative if successful"]},
+{id:166,name:"WA Department of Justice (Courts)",category:"Grant / Gov",location:"WA",phone:"(08) 9264 1111",email:"",website:"justice.wa.gov.au",desc:"Manages security for all WA courthouses.",issues:["Highly volatile environments","Pitch AI weapon detection and facial recognition for known threats","Very strict procurement, target the Director of Security"]},
+{id:167,name:"G4S Australia",category:"Partner",location:"Perth",phone:"1300 306 434",email:"",website:"g4s.com/en-au",desc:"Global private security company.",issues:["They manage Port Phillip Prison and major transport hubs","Pitch Guardian Eye as a technology partner for their tenders","Enhance their guarding services with AI insights"]},
+{id:168,name:"Certis Security Australia",category:"Partner",location:"Perth",phone:"1300 365 330",email:"",website:"certisgroup.com/au",desc:"Large tech-led security guarding company.",issues:["They already lean heavily into 'tech-led' security","Pitch our AI as an add-on to their existing platform","Co-bidding on large corporate contracts"]},
+{id:169,name:"Glad Group",category:"Partner",location:"Perth",phone:"1300 854 523",email:"",website:"gladgroup.com.au",desc:"Integrated property services (cleaning, security, maintenance).",issues:["They service major shopping centres","Pitch AI slip-and-fall detection to integrate their cleaning and security responses","Value-add for their strata clients"]},
+{id:170,name:"Spotless (Downer Group)",category:"Partner",location:"Perth",phone:"1300 776 853",email:"",website:"spotless.com",desc:"Massive facilities management company.",issues:["They manage defense bases, hospitals, and stadiums","Pitch AI consulting to help them optimize their security deployments","Massive scale potential"]},
+{id:171,name:"Broadspectrum (Ventia)",category:"Partner",location:"Perth",phone:"1300 836 842",email:"",website:"ventia.com",desc:"Essential infrastructure services.",issues:["Similar to Spotless","Pitch AI for critical infrastructure (telecom towers, water plants)","Target their WA innovation leads"]},
+{id:172,name:"ISPT (Super Property Trust)",category:"Commercial Client",location:"Perth",phone:"",email:"",website:"ispt.net.au",desc:"Owns Enex100, Forrest Chase, and major commercial assets.",issues:["Target their asset managers","Pitch unified AI security across their entire WA portfolio","Focus on tenant safety and reducing OPEX"]},
+{id:173,name:"Charter Hall",category:"Commercial Client",location:"Perth",phone:"(08) 9269 5900",email:"",website:"charterhall.com.au",desc:"Major property investment and funds management group.",issues:["They own Raine Square and Bankwest Tower","Pitch premium AI concierge services","Tailgating detection and carpark analytics"]},
+{id:174,name:"Dexus",category:"Commercial Client",location:"Perth",phone:"(08) 9481 8300",email:"",website:"dexus.com",desc:"Australian real estate group.",issues:["Owns 240 St Georges Terrace and Kings Square","Similar to Charter Hall, focus on premium corporate security","Pitch health/safety analytics (e.g., occupancy counting)"]},
+{id:175,name:"Brookfield Properties",category:"Commercial Client",location:"Perth",phone:"(08) 9322 2000",email:"",website:"brookfieldproperties.com",desc:"Global real estate developer (Brookfield Place).",issues:["Premium asset management","Pitch advanced AI integration for their flagship Perth buildings","Executive protection tech"]},
+{id:176,name:"Mirvac",category:"Commercial Client",location:"Perth",phone:"(08) 9424 9900",email:"",website:"mirvac.com",desc:"Property group (David Malcolm Justice Centre, Allendale Square).",issues:["Pitch AI security for both their commercial towers and residential developments","Consulting on 'smart building' integration"]},
+{id:177,name:"Nuveen Real Estate",category:"Commercial Client",location:"Perth",phone:"",email:"",website:"nuveen.com",desc:"Global investment manager.",issues:["Asset protection","Pitch AI analytics to prove ROI on security spend to their investors","Standardize security across their portfolio"]},
+{id:178,name:"Hesperia",category:"Construction",location:"Subiaco",phone:"(08) 9380 8000",email:"info@hesperia.com.au",website:"hesperia.com.au",desc:"Major WA property developer.",issues:["Target both their construction sites (temporary AI cameras) and finished assets (permanent AI integration)","Consulting for heritage redevelopments (e.g., Victoria House)"]},
+{id:179,name:"Cedar Woods Properties",category:"Construction",location:"Subiaco",phone:"(08) 9480 1500",email:"email@cedarwoods.com.au",website:"cedarwoods.com.au",desc:"National residential developer.",issues:["Pitch AI security for their display villages (highly targeted by thieves)","Temporary solar CCTV for new land estates"]},
+{id:180,name:"Peet Limited",category:"Construction",location:"Perth",phone:"(08) 9420 1111",email:"perth@peet.com.au",website:"peet.com.au",desc:"Major land developer.",issues:["Similar to Cedar Woods, focus on securing display homes and sales offices","Pitch ANPR to track visitor numbers to display villages (marketing value)"]},
+{id:181,name:"Stockland (WA)",category:"Commercial Client",location:"Perth",phone:"(08) 9368 9222",email:"",website:"stockland.com.au",desc:"Residential and retail property developer.",issues:["Pitch AI security for their shopping centres (e.g., Bull Creek, Riverton)","And temporary CCTV for their residential estates","Unified vendor approach"]},
+{id:182,name:"Satterley Property Group",category:"Construction",location:"South Perth",phone:"(08) 9368 9000",email:"info@satterley.com.au",website:"satterley.com.au",desc:"Australia's largest private land developer.",issues:["Display village security is critical","Pitch AI solar poles that can be moved as the estate develops","Deterring illegal dumping in new estates"]},
+{id:183,name:"J-Corp (Content Living / Dreamstart)",category:"Construction",location:"Osborne Park",phone:"(08) 9244 4444",email:"",website:"jcorp.com.au",desc:"Large residential builder.",issues:["Residential site theft","Pitch a subscription model: $X per month per house build for complete AI monitoring","Pays for itself by preventing stolen appliances"]},
+{id:184,name:"Plunkett Homes",category:"Construction",location:"Perth",phone:"(08) 9366 0000",email:"",website:"plunketthomes.com.au",desc:"Historic WA builder.",issues:["Similar to J-Corp","Pitch video verification to stop false alarms when tradies arrive early","Time-lapse videos for clients"]},
+{id:185,name:"Webb & Brown-Neaves",category:"Construction",location:"Osborne Park",phone:"(08) 9208 9000",email:"",website:"wbhomes.com.au",desc:"Premium residential builder (ABN Group).",issues:["High-end homes have high-value fittings (Miele appliances etc.)","Pitch premium AI monitoring for these specific sites","Protects their brand reputation for quality/timeliness"]},
+{id:186,name:"Zorzi Builders",category:"Construction",location:"Osborne Park",phone:"(08) 9382 4880",email:"",website:"zorzi.com.au",desc:"Luxury custom home builder.",issues:["Ultra-luxury builds take years and have massive asset value on site","Pitch bespoke AI security solutions for the build phase, transferring to the owner post-handover"]},
+{id:187,name:"Oswald Homes",category:"Construction",location:"Osborne Park",phone:"(08) 9231 4800",email:"",website:"oswaldhomes.com.au",desc:"Luxury builder.",issues:["Similar to Zorzi","Pitch AI integration with high-end home automation (Control4, Crestron) as a consulting service"]},
+{id:188,name:"Home Group WA",category:"Construction",location:"Osborne Park",phone:"(08) 6241 4141",email:"",website:"homegroup.com.au",desc:"Volume builder.",issues:["Volume builders need cheap, reliable, scalable security","Pitch rapid-deployment AI cameras","Focus on stopping copper/wiring theft"]},
+{id:189,name:"Aveling Homes",category:"Construction",location:"Balcatta",phone:"(08) 6144 1000",email:"",website:"avelinghomes.com.au",desc:"Residential builder.",issues:["Site security and OH&S compliance","Pitch AI to detect if tradies are leaving sites unsecured at the end of the day"]},
+{id:190,name:"Celebration Homes",category:"Construction",location:"Osborne Park",phone:"(08) 9208 9000",email:"",website:"celebrationhomes.com.au",desc:"Volume builder (ABN Group).",issues:["Similar to Home Group WA","Pitch economies of scale for monitoring 100+ sites simultaneously"]},
+{id:191,name:"Boutique Homes (WA)",category:"Construction",location:"Perth",phone:"",email:"",website:"",desc:"Residential builder.",issues:["Target construction managers","Pitch AI verification to eliminate false alarm callout fees (which eat into their margins)"]},
+{id:192,name:"Ventura Home Group",category:"Construction",location:"Osborne Park",phone:"(08) 9444 4444",email:"",website:"venturahomes.com.au",desc:"Residential builder.",issues:["Site theft delays handovers","Pitch AI as a customer satisfaction tool (homes finished on time because materials weren't stolen)"]},
+{id:193,name:"Redink Homes",category:"Construction",location:"Osborne Park",phone:"(08) 9208 1111",email:"",website:"redinkhomes.com.au",desc:"Residential builder (Scott Park Group).",issues:["Similar to Ventura","Pitch temporary AI solar skids"]},
+{id:194,name:"Scott Park Group",category:"Construction",location:"Osborne Park",phone:"",email:"",website:"scottparkgroup.com.au",desc:"Parent company of Redink, 101 Residential.",issues:["Target the group procurement manager","Pitch a group-wide contract for site security","Massive scale opportunity"]},
+{id:195,name:"BGC Cement / Quarries",category:"Commercial Client",location:"Various WA",phone:"(08) 6220 4800",email:"",website:"bgc.com.au",desc:"Heavy industrial materials.",issues:["Massive, dusty, remote sites","Pitch thermal AI cameras (immune to dust) for perimeter security","OH&S monitoring near crushers"]},
+{id:196,name:"Hanson Australia (WA)",category:"Commercial Client",location:"Various WA",phone:"13 26 62",email:"",website:"hanson.com.au",desc:"Concrete and aggregates.",issues:["Similar to BGC Quarries","Pitch AI truck tracking and load verification","Perimeter security against environmental activists"]},
+{id:197,name:"Holcim (WA)",category:"Commercial Client",location:"Various WA",phone:"13 11 88",email:"",website:"holcim.com.au",desc:"Concrete and aggregates.",issues:["Industrial security","Pitch AI detection of unauthorized access to dangerous silos/batching plants"]},
+{id:198,name:"Boral (WA)",category:"Commercial Client",location:"Various WA",phone:"1300 11 22 22",email:"",website:"boral.com.au",desc:"Building products.",issues:["Similar to Holcim","Pitch AI to detect trucks speeding in the yard (safety)","Perimeter monitoring"]},
+{id:199,name:"WA Police (State CCTV Register - Cam-Map WA)",category:"Grant / Gov",location:"WA",phone:"131 444",email:"",website:"police.wa.gov.au",desc:"Not a grant, but a crucial integration point.",issues:["Register Guardian Eye as a provider","Use this as a massive selling point to clients: 'Our AI connects directly to the WA Police database for faster response'"]},
+{id:200,name:"City of Fremantle (Safety Cameras)",category:"Grant / Gov",location:"Fremantle",phone:"(08) 9432 9999",email:"",website:"fremantle.wa.gov.au",desc:"Local council with complex nightlife and heritage security needs.",issues:["Pitch AI integration for the 'Cappuccino Strip' to detect brawls before they escalate","Look for 'Safer Communities' grants"]}
+];
+</script>
+<script>const LEADS_SECURITY_5 = [
+{id:201,name:"Westrac (Regional Branches)",category:"Commercial Client",location:"WA Regional",phone:"",email:"",website:"westrac.com.au",desc:"Caterpillar dealerships in regional WA (Kalgoorlie, Newman).",issues:["Remote yards with multi-million dollar equipment","Pitch solar AI cameras with satellite/4G connections","Cheaper than housing security guards in remote towns"]},
+{id:202,name:"Brooks Hire Service",category:"Commercial Client",location:"Welshpool / Regional",phone:"1300 276 657",email:"",website:"brookshire.com.au",desc:"Huge privately-owned equipment hire company.",issues:["Target the owners directly","Pitch AI to protect their massive yellow-iron fleet from theft and vandalism","Integration with their existing GPS tracking"]},
+{id:203,name:"Emeco Group",category:"Commercial Client",location:"Osborne Park",phone:"(08) 9420 0222",email:"",website:"emecogroup.com",desc:"Heavy earthmoving equipment rental.",issues:["Similar to Brooks Hire, massive asset values","Pitch AI yard security and perimeter defense","Focus on ROI (Return on Investment) compared to physical guarding"]},
+{id:204,name:"NRW Holdings",category:"Commercial Client",location:"Belmont",phone:"(08) 9232 4200",email:"",website:"nrw.com.au",desc:"Civil and mining contractor.",issues:["Target their logistics and maintenance yards","Pitch AI safety monitoring (e.g., detecting oil spills or fire hazards)","Corporate security consulting"]},
+{id:205,name:"MACA (Mining and Civil Australia)",category:"Commercial Client",location:"Welshpool",phone:"(08) 9323 3000",email:"",website:"maca.net.au",desc:"Mining and civil contractor.",issues:["Similar to NRW","Pitch AI for their temporary civil construction sites (e.g., highway upgrades)","Rapid deployment CCTV skids"]},
+{id:206,name:"Decmil",category:"Construction",location:"Osborne Park",phone:"(08) 9368 8877",email:"",website:"decmil.com",desc:"Complex infrastructure and construction.",issues:["They build remote camps and infrastructure","Pitch AI security for their remote laydown yards","Consulting on securing critical infrastructure builds"]},
+{id:207,name:"Georgiou Group",category:"Construction",location:"Osborne Park",phone:"(08) 9200 2500",email:"",website:"georgiou.com.au",desc:"National civil and building contractor.",issues:["Major road and bridge projects","Pitch AI traffic monitoring and site security to protect against copper theft","Temporary solar setups"]},
+{id:208,name:"Ertech",category:"Construction",location:"Wangara",phone:"(08) 9302 6666",email:"",website:"ertech.com.au",desc:"Civil engineering and construction.",issues:["Similar to Georgiou, target civil infrastructure sites","Pitch AI to detect public trespassing on dangerous earthworks sites"]},
+{id:209,name:"CPB Contractors (WA)",category:"Construction",location:"Perth",phone:"(08) 9288 0888",email:"",website:"cpbcon.com.au",desc:"Tier 1 contractor (Metronet projects).",issues:["Massive rail and infrastructure projects","Pitch AI safety monitoring (e.g., detecting workers too close to live rail)","Requires high-level rail safety accreditation to pitch"]},
+{id:210,name:"Laing O'Rourke (WA)",category:"Construction",location:"Perth",phone:"(08) 9311 4000",email:"",website:"laingorourke.com",desc:"Tier 1 contractor.",issues:["Similar to CPB, target Metronet or major defense projects","Pitch advanced AI analytics for site productivity and safety","Premium consulting"]},
+{id:211,name:"John Holland (WA)",category:"Construction",location:"Perth",phone:"(08) 9482 6800",email:"",website:"johnholland.com.au",desc:"Tier 1 contractor.",issues:["Major rail and water infrastructure","Pitch AI perimeter security for massive linear construction sites (e.g., laying pipelines)"]},
+{id:212,name:"City of Belmont (Community Watch)",category:"Grant / Gov",location:"Belmont",phone:"(08) 9477 7222",email:"",website:"belmont.wa.gov.au",desc:"Council with significant industrial (Welshpool/Kewdale) and residential areas.",issues:["Pitch AI integration for their Community Watch vehicles","Look for grants targeting industrial crime (theft from Welshpool businesses)"]},
+{id:213,name:"City of Canning (Safe Communities)",category:"Grant / Gov",location:"Cannington",phone:"1300 422 664",email:"",website:"canning.wa.gov.au",desc:"Major south-eastern council.",issues:["High traffic retail (Carousel) and industrial areas","Pitch AI analytics for managing traffic and crowds around major retail hubs","Apply for joint state grants"]},
+{id:214,name:"Kewdale Freight Terminal (Pacific National/Aurizon)",category:"Commercial Client",location:"Kewdale",phone:"",email:"",website:"",desc:"Massive rail freight hub.",issues:["Critical national infrastructure","Pitch thermal AI for perimeter security and detecting trespassers on the rail corridor","High-value freight protection"]},
+{id:215,name:"CBH Group (Kwinana Grain Terminal)",category:"Commercial Client",location:"Kwinana",phone:"(08) 9419 9222",email:"",website:"cbh.com.au",desc:"Massive port facility.",issues:["Maritime and industrial security","Pitch AI ship loading analytics and perimeter defense","Requires MSIC clearance"]},
+{id:216,name:"WA Meat Industry Authority (Muchea Livestock Centre)",category:"Commercial Client",location:"Muchea",phone:"(08) 9571 0111",email:"",website:"wamia.wa.gov.au",desc:"Largest livestock selling centre in WA.",issues:["Livestock theft and animal activist trespassing","Pitch AI thermal cameras to detect intruders on the massive rural perimeter at night","Animal welfare monitoring"]},
+{id:217,name:"Craig Mostyn Group (Linley Valley Pork)",category:"Commercial Client",location:"Wooroloo",phone:"(08) 9573 8000",email:"",website:"craigmostyn.com.au",desc:"Major agribusiness and abattoir.",issues:["Similar to Muchea, target bio-security and perimeter defense against unauthorized access","AI thermal monitoring"]},
+{id:218,name:"Harvey Beef",category:"Commercial Client",location:"Harvey",phone:"(08) 9729 0000",email:"",website:"harveybeef.com.au",desc:"Major WA beef producer.",issues:["Agribusiness security","Pitch AI to monitor feedlots and processing perimeters","Bio-security compliance via CCTV"]},
+{id:219,name:"D'Orsogna",category:"Commercial Client",location:"Palmyra / Mickleham",phone:"(08) 9337 3333",email:"",website:"dorsogna.com.au",desc:"Major food manufacturer.",issues:["Food safety and facility security","Pitch AI to detect if staff are wearing correct hygiene PPE (hairnets, gloves)","Loading dock security"]},
+{id:220,name:"Brownes Dairy",category:"Commercial Client",location:"Balcatta",phone:"(08) 9441 7777",email:"",website:"brownesdairy.com.au",desc:"Major WA dairy producer.",issues:["Similar to D'Orsogna, focus on food safety compliance and fleet yard security","AI tracking of milk tankers in the yard"]},
+{id:221,name:"Masters Dairy (Bega/Lion)",category:"Commercial Client",location:"Bentley",phone:"",email:"",website:"",desc:"Dairy processing.",issues:["Factory security and OH&S","Pitch AI forklift safety and slip/fall detection on wet factory floors"]},
+{id:222,name:"Fremantle Hospital",category:"Commercial Client",location:"Fremantle",phone:"(08) 9431 3333",email:"",website:"fh.health.wa.gov.au",desc:"State hospital.",issues:["Pitch AI aggression detection in triage areas","Wandering patient detection","Security for the sprawling heritage campus"]},
+{id:223,name:"King Edward Memorial Hospital",category:"Commercial Client",location:"Subiaco",phone:"(08) 6458 2222",email:"",website:"kemh.health.wa.gov.au",desc:"Women's and maternity hospital.",issues:["Extremely high-risk environment for infant abduction or DV incidents","Pitch AI facial recognition (if approved) and strict tailgating detection at ward doors"]},
+{id:224,name:"St John of God (Subiaco)",category:"Commercial Client",location:"Subiaco",phone:"(08) 9382 6111",email:"",website:"sjog.org.au",desc:"Major private hospital.",issues:["Private hospitals have larger security budgets","Pitch premium AI monitoring to improve patient safety and reduce liability claims"]},
+{id:225,name:"Ramsay Health Care (Hollywood Private)",category:"Commercial Client",location:"Nedlands",phone:"(08) 9346 6000",email:"",website:"hollywoodprivate.com.au",desc:"Largest private hospital in WA.",issues:["Similar to SJOG, focus on liability reduction and premium security","AI tracking of expensive medical equipment (wheelchairs, beds) via CCTV"]},
+{id:226,name:"Joondalup Health Campus (Ramsay)",category:"Commercial Client",location:"Joondalup",phone:"(08) 9400 9400",email:"",website:"joondaluphealthcampus.com.au",desc:"Massive public/private hospital.",issues:["One of the busiest EDs in the state","Pitch AI weapon detection and aggression alerts","Target the Ramsay facilities manager"]},
+{id:227,name:"Telethon Kids Institute",category:"Grant / Gov",location:"Nedlands",phone:"(08) 6319 1000",email:"",website:"telethonkids.org.au",desc:"Medical research facility within PCH.",issues:["Extremely strict data security and physical security requirements","Pitch AI auditing of their access control systems","Consulting on secure data environments"]},
+{id:228,name:"Pawsey Supercomputing Centre",category:"Grant / Gov",location:"Kensington",phone:"(08) 6436 8830",email:"",website:"pawsey.org.au",desc:"Critical national research infrastructure.",issues:["Tier 1 data centre security","Pitch AI tailgating detection and dual-factor CCTV verification","Highest level of cyber/physical consulting"]},
+{id:229,name:"WA Police Academy",category:"Grant / Gov",location:"Joondalup",phone:"(08) 9301 9500",email:"",website:"police.wa.gov.au",desc:"Training facility.",issues:["Pitch Guardian Eye as a training partner to educate cadets on the future of AI in policing","Provides massive industry credibility"]},
+{id:230,name:"Australian Border Force (WA)",category:"Grant / Gov",location:"Perth Airport / Fremantle",phone:"131 881",email:"",website:"abf.gov.au",desc:"Federal agency.",issues:["Pitch AI customs analytics (e.g., detecting anomalies in baggage handling areas)","Massive federal tenders, highly complex"]},
+{id:231,name:"Ascot Racecourse (Perth Racing)",category:"Commercial Client",location:"Ascot",phone:"(08) 9277 0777",email:"",website:"perthracing.com.au",desc:"Major event venue.",issues:["Crowd control, intoxication, and high-value animal protection","Pitch AI loitering detection near the stables (preventing doping/tampering)","Crowd density analytics for race days"]},
+{id:232,name:"Gloucester Park (Harness Racing)",category:"Commercial Client",location:"East Perth",phone:"(08) 9323 3555",email:"",website:"gloucesterpark.com.au",desc:"Friday night racing venue.",issues:["Similar to Ascot, focus on stable security and nightlife crowd control","AI analytics for security guard deployment"]},
+{id:233,name:"WACA Ground (WA Cricket)",category:"Commercial Client",location:"East Perth",phone:"(08) 9265 7222",email:"",website:"wacricket.com.au",desc:"Historic sports venue currently undergoing major redevelopment.",issues:["Pitch AI security for the construction phase AND the final integrated smart-stadium system","Target the project managers now"]},
+{id:234,name:"HBF Park (VenuesWest)",category:"Commercial Client",location:"Perth",phone:"(08) 9422 1500",email:"",website:"hbfpark.com.au",desc:"Rectangular sports stadium (Glory/Force).",issues:["Pitch AI crowd behavior analytics (detecting flares, pitch invasions)","Automated alerting to the control room"]},
+{id:235,name:"WA Maritime Museum",category:"Grant / Gov",location:"Fremantle",phone:"1300 134 081",email:"",website:"museum.wa.gov.au",desc:"State museum located on the water.",issues:["High-value exhibits (e.g., Australia II)","Pitch AI analytics for exhibit interaction (business intelligence) and out-of-hours perimeter defense"]},
+{id:236,name:"AQWA (Aquarium of WA)",category:"Commercial Client",location:"Hillarys",phone:"(08) 9447 7500",email:"",website:"aqwa.com.au",desc:"Major tourist attraction.",issues:["Crowd analytics and after-hours security","Pitch AI to detect if someone falls into an open exhibit (safety critical)"]},
+{id:237,name:"Adventure World",category:"Commercial Client",location:"Bibra Lake",phone:"(08) 9417 9666",email:"",website:"adventureworld.net.au",desc:"WA's largest theme park.",issues:["Massive summer crowds, high liability","Pitch AI crowd density and queue wait-time analytics","Slip and fall detection around water rides"]},
+{id:238,name:"Outback Splash",category:"Commercial Client",location:"Bullsbrook",phone:"(08) 9571 1375",email:"",website:"outbacksplash.com.au",desc:"Water park.",issues:["Similar to Adventure World, focus on water safety","Pitch AI drowning detection in the splash zones (cutting-edge tech)"]},
+{id:239,name:"Minderoo Foundation (Tattarang)",category:"Commercial Client",location:"Nedlands",phone:"(08) 6460 4949",email:"",website:"tattarang.com",desc:"Andrew Forrest's private investment group (owns Indiana Teahouse, RM Williams, etc).",issues:["Pitch high-end, discreet AI security consulting for their premium WA assets and private properties","Executive protection tech"]},
+{id:240,name:"Fiveight (Tattarang Property)",category:"Commercial Client",location:"Perth",phone:"",email:"",website:"fiveight.com",desc:"Tattarang's property arm.",issues:["They are developing major new sites in WA","Pitch 'security by design' consulting to integrate AI from the ground up"]},
+{id:241,name:"Gage Roads Brew Co (Freo)",category:"Commercial Client",location:"Fremantle",phone:"(08) 9314 0000",email:"",website:"gageroads.com.au",desc:"Massive hospitality venue on the water.",issues:["High volume liquor venue, waterfront liability","Pitch AI aggression detection and crowd counting","Water rescue/fall-in detection"]},
+{id:242,name:"Little Creatures (Kirin)",category:"Commercial Client",location:"Fremantle",phone:"(08) 6215 1000",email:"",website:"littlecreatures.com.au",desc:"Major brewery and venue.",issues:["Similar to Gage Roads, high foot traffic, alcohol","Pitch AI analytics to help security staff manage bottlenecks and detect fights early"]},
+{id:243,name:"The Camfield",category:"Commercial Client",location:"Burswood",phone:"(08) 6314 1360",email:"",website:"thecamfieldbar.com.au",desc:"Australia's largest pub (next to Optus Stadium).",issues:["Massive crowds on game days","Pitch AI crowd density mapping and aggression alerts","Reduces the number of physical crowd controllers needed"]},
+{id:244,name:"ALH Group (WA Pubs)",category:"Commercial Client",location:"WA",phone:"",email:"",website:"alhgroup.com.au",desc:"Endeavour Group's pub arm (owns dozens of WA taverns).",issues:["Target the state operations manager","Pitch a unified AI platform for all their WA venues to monitor compliance, patron numbers, and safety"]},
+{id:245,name:"Australian Hotels Association (AHA WA)",category:"Partner",location:"West Perth",phone:"(08) 9321 7701",email:"exec@ahawa.asn.au",website:"ahawa.asn.au",desc:"Peak body for WA hospitality.",issues:["Become a corporate sponsor","Pitch AI security as a way for venues to reduce their insurance premiums and liability","Massive networking opportunity"]},
+{id:246,name:"Motor Trade Association (MTA WA)",category:"Partner",location:"Balcatta",phone:"(08) 9233 9800",email:"mtawa@mtawa.com.au",website:"mtawa.com.au",desc:"Peak body for WA auto dealers and repairers.",issues:["Car yards are your perfect customer","Partner with MTA WA to offer member discounts on Guardian Eye AI monitoring","Instantly reach hundreds of dealerships"]},
+{id:247,name:"Housing Industry Association (HIA WA)",category:"Partner",location:"Osborne Park",phone:"1300 650 620",email:"wa_enquiry@hia.com.au",website:"hia.com.au",desc:"Peak body for residential builders.",issues:["Similar to MTA, target them to reach all the WA home builders","Pitch AI temporary site security to stop copper theft","Present at their industry nights"]},
+{id:248,name:"Master Builders WA (MBA WA)",category:"Partner",location:"West Perth",phone:"(08) 9476 9800",email:"mba@mbawa.com",website:"mbawa.com",desc:"Peak body for commercial and residential builders.",issues:["Partner to provide OH&S compliance monitoring via AI","Sponsor their safety awards to build Guardian Eye brand recognition"]},
+{id:249,name:"Chamber of Commerce and Industry WA (CCIWA)",category:"Partner",location:"Perth CBD",phone:"1300 422 492",email:"info@cciwa.com",website:"cciwa.com",desc:"Major business network.",issues:["Join as a member to network with WA business leaders","Pitch AI security as a business efficiency and risk-reduction tool","Look for B2B tech grants"]},
+{id:250,name:"City of Perth (Economic Development)",category:"Grant / Gov",location:"Perth CBD",phone:"(08) 9461 3333",email:"",website:"perth.wa.gov.au",desc:"Council department focusing on business growth.",issues:["Look for grants supporting Perth-based tech startups","Pitch Guardian Eye as a local success story needing support to scale globally","Access to free business mentoring and CBD event spaces"]}
+];
+</script>
+<script>document.addEventListener('DOMContentLoaded', () => {
+  const STORAGE_KEY = 'guardianeye_tracker';
+  function loadState() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; } }
+  function saveState(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+  let state = loadState();
+
+  const ALL_LEADS = [].concat(
+    typeof LEADS_SECURITY_1 !== 'undefined' ? LEADS_SECURITY_1 : [],
+    typeof LEADS_SECURITY_2 !== 'undefined' ? LEADS_SECURITY_2 : [],
+    typeof LEADS_SECURITY_3 !== 'undefined' ? LEADS_SECURITY_3 : [],
+    typeof LEADS_SECURITY_4 !== 'undefined' ? LEADS_SECURITY_4 : [],
+    typeof LEADS_SECURITY_5 !== 'undefined' ? LEADS_SECURITY_5 : []
+  );
+
+  const catSelect = document.getElementById('filter-category');
+  function rebuildCategories() {
+    catSelect.innerHTML = '<option value="all">All Categories</option>';
+    const cats = [...new Set(ALL_LEADS.map(l => l.category))].sort();
+    cats.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; catSelect.appendChild(o); });
+  }
+  rebuildCategories();
+
+  const grid = document.getElementById('card-grid');
+  const searchInput = document.getElementById('search');
+  const statusFilter = document.getElementById('filter-status');
+  const categoryFilter = document.getElementById('filter-category');
+  const contactFilter = document.getElementById('filter-contact');
+  const statsBar = document.getElementById('stats-bar');
+  const modalOverlay = document.getElementById('modal-overlay');
+  const modalContent = document.getElementById('modal-content');
+  const modalClose = document.getElementById('modal-close');
+
+  function getS(id) { return state[id]?.status || 'new'; }
+  function getN(id) { return state[id]?.notes || ''; }
+  function isDone(id) { return state[id]?.done || false; }
+
+  function contactType(l) {
+    if (l.email || l.phone) return 'direct';
+    if (l.website) return 'form-only';
+    return 'none';
+  }
+
+  function catClass(cat) {
+    const c = cat.toLowerCase();
+    if (c.includes('grant') || c.includes('gov')) return 'cat-accounting'; // Greenish
+    if (c.includes('commercial')) return 'cat-cafe'; // Orangey
+    if (c.includes('partner')) return 'cat-health'; // Reddish
+    if (c.includes('construction')) return 'cat-mechanic'; // Bluish
+    if (c.includes('strata')) return 'cat-retail'; // Purple
+    return 'cat-other';
+  }
+
+  function geminiUrl(l) {
+    const prompt = encodeURIComponent(
+      `I'm representing Guardian Eye (https://guardianeye.live), a cutting-edge CCTV monitoring, AI security, and security consulting company based in Perth. ` +
+      `We are reaching out to "${l.name}" (${l.category}, ${l.location}). ` +
+      `Their organization info: ${l.desc} ` +
+      `Our key talking points/issues to bring up with them: ${l.issues.join('; ')}. ` +
+      `Write a professional, highly compelling B2B outreach email/script (short, max 150 words) to start a conversation with them about how our AI security solutions can save them money, reduce reliance on physical guards, and improve their security posture. Be professional and tech-forward.`
+    );
+    return `https://gemini.google.com/app?q=${prompt}`;
+  }
+
+  function statusEmoji(s) { return {new:'🔵',contacted:'🟡',interested:'🟢','not-interested':'🔴','no-answer':'⚪',done:'✅'}[s]||'🔵'; }
+
+  function updateStats() {
+    const leads = ALL_LEADS;
+    const c = {new:0,contacted:0,interested:0,'not-interested':0,'no-answer':0,done:0};
+    leads.forEach(l => { if(isDone(l.id)) c.done++; else c[getS(l.id)]++; });
+    statsBar.innerHTML = `
+      <span class="stat"><span class="stat-dot" style="background:#39d0d8"></span>New: ${c.new}</span>
+      <span class="stat"><span class="stat-dot" style="background:#d29922"></span>Contacted: ${c.contacted}</span>
+      <span class="stat"><span class="stat-dot" style="background:#3fb950"></span>In Progress: ${c.interested}</span>
+      <span class="stat"><span class="stat-dot" style="background:#f85149"></span>Rejected: ${c['not-interested']}</span>
+      <span class="stat"><span class="stat-dot" style="background:#8b949e"></span>No Ans: ${c['no-answer']}</span>
+      <span class="stat"><span class="stat-dot" style="background:#a371f7"></span>Won/Secured: ${c.done}</span>
+      <span class="stat" style="font-weight:700">Total: ${leads.length}</span>`;
+  }
+
+  function render() {
+    const search = searchInput.value.toLowerCase();
+    const sF = statusFilter.value;
+    const cF = categoryFilter.value;
+    const ctF = contactFilter.value;
+    const filtered = ALL_LEADS.filter(l => {
+      if (search && !`${l.name} ${l.category} ${l.location} ${l.desc}`.toLowerCase().includes(search)) return false;
+      const s = isDone(l.id) ? 'done' : getS(l.id);
+      if (sF !== 'all' && s !== sF) return false;
+      if (cF !== 'all' && l.category !== cF) return false;
+      if (ctF !== 'all' && contactType(l) !== ctF) return false;
+      return true;
+    });
+    if (!filtered.length) { grid.innerHTML = '<div class="empty-state">No leads match your filters.</div>'; updateStats(); return; }
+
+    grid.innerHTML = filtered.map(l => {
+      const s = isDone(l.id) ? 'done' : getS(l.id);
+      const n = getN(l.id);
+      const done = isDone(l.id);
+      const contacts = [];
+      if (l.phone) contacts.push(`<span class="contact-chip">📞 <a href="tel:${l.phone}">${l.phone}</a></span>`);
+      if (l.email) contacts.push(`<span class="contact-chip">✉️ <a href="mailto:${l.email}">${l.email}</a></span>`);
+      if (l.website) contacts.push(`<span class="contact-chip">🌐 <a href="https://${l.website}" target="_blank" rel="noopener">${l.website}</a></span>`);
+
+      return `<div class="lead-card status-${s}" data-id="${l.id}">
+        <div class="card-top">
+          <div><div class="card-name">${l.name}</div><div class="card-meta">📍 ${l.location}</div></div>
+          <div class="card-badges">
+            <span class="badge-cat ${catClass(l.category)}">${l.category}</span>
+          </div>
+        </div>
+        <div class="card-desc">${l.desc}</div>
+        <div class="card-issues">${l.issues.slice(0,2).map(i=>`<div class="card-issue">${i}</div>`).join('')}</div>
+        <div class="card-contacts">${contacts.join('')}</div>
+        <div class="card-actions">
+          <select class="card-sel" data-id="${l.id}">
+            <option value="new" ${s==='new'?'selected':''}>🔵 New</option>
+            <option value="contacted" ${s==='contacted'?'selected':''}>🟡 Contacted</option>
+            <option value="interested" ${s==='interested'?'selected':''}>🟢 In Progress/Pitch</option>
+            <option value="not-interested" ${s==='not-interested'?'selected':''}>🔴 Rejected</option>
+            <option value="no-answer" ${s==='no-answer'?'selected':''}>⚪ No Answer</option>
+          </select>
+          <button class="btn-done${done?' is-done':''}" data-id="${l.id}">${done?'✅ Won':'☐ Won'}</button>
+          <a class="btn-gemini" href="${geminiUrl(l)}" target="_blank" rel="noopener" title="Get AI outreach script">✨ Gemini</a>
+        </div>
+        <textarea class="card-notes" data-id="${l.id}" placeholder="Add notes...">${n}</textarea>
+      </div>`;
+    }).join('');
+
+    grid.querySelectorAll('.card-sel').forEach(sel => {
+      sel.addEventListener('change', e => { e.stopPropagation(); const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].status=e.target.value; saveState(state); render(); });
+    });
+    grid.querySelectorAll('.btn-done').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].done=!state[id].done; saveState(state); render(); });
+    });
+    grid.querySelectorAll('.card-notes').forEach(ta => {
+      ta.addEventListener('input', e => { const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].notes=e.target.value; saveState(state); });
+      ta.addEventListener('click', e => e.stopPropagation());
+    });
+    grid.querySelectorAll('.lead-card').forEach(card => {
+      card.addEventListener('click', e => { if(e.target.closest('select,textarea,a,button')) return; openModal(+card.dataset.id); });
+    });
+    updateStats();
+  }
+
+  function openModal(id) {
+    const l = ALL_LEADS.find(x=>x.id===id); if(!l)return;
+    const s=isDone(l.id)?'done':getS(l.id), n=getN(l.id);
+    let ch='';
+    if(l.phone)ch+=`<div>📞 <a href="tel:${l.phone}">${l.phone}</a></div>`;
+    if(l.email)ch+=`<div>✉️ <a href="mailto:${l.email}">${l.email}</a></div>`;
+    if(!l.phone&&!l.email)ch+=`<div>📝 Contact via website</div>`;
+    modalContent.innerHTML = `
+      <h2>${l.name}</h2>
+      <div class="m-meta">${l.category} · 📍 ${l.location} · ${statusEmoji(s)} ${s.replace('-',' ')}</div>
+      ${l.website?`<div class="m-website m-section">🌐 <a href="https://${l.website}" target="_blank">${l.website}</a></div>`:''}
+      <div class="m-desc">${l.desc}</div>
+      <div class="m-section"><div class="m-label">Sales Angles / Target</div>${l.issues.map(i=>`<div class="m-issue">${i}</div>`).join('')}</div>
+      <div class="m-section m-contacts"><div class="m-label">Contact Details</div>${ch}</div>
+      <div class="m-section"><div class="m-label">Status</div>
+        <select id="modal-status" style="width:100%;padding:10px;font-size:1rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--font)">
+          <option value="new" ${s==='new'?'selected':''}>🔵 New</option>
+          <option value="contacted" ${s==='contacted'?'selected':''}>🟡 Contacted</option>
+          <option value="interested" ${s==='interested'?'selected':''}>🟢 In Progress / Pitch</option>
+          <option value="not-interested" ${s==='not-interested'?'selected':''}>🔴 Rejected</option>
+          <option value="no-answer" ${s==='no-answer'?'selected':''}>⚪ No Answer</option>
+        </select>
+      </div>
+      <div class="m-section"><div class="m-label">Notes</div><textarea id="modal-notes" style="width:100%;min-height:80px;padding:10px;font-size:0.95rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--font)">${n}</textarea></div>
+      <div class="m-section" style="text-align:center"><a class="btn-gemini" href="${geminiUrl(l)}" target="_blank" rel="noopener" style="display:inline-block;padding:12px 24px;font-size:1rem">✨ Draft Outreach with Gemini</a></div>`;
+    document.getElementById('modal-status').addEventListener('change',e=>{if(!state[id])state[id]={};state[id].status=e.target.value;saveState(state);render();});
+    document.getElementById('modal-notes').addEventListener('input',e=>{if(!state[id])state[id]={};state[id].notes=e.target.value;saveState(state);});
+    modalOverlay.classList.add('active');
+  }
+
+  modalClose.addEventListener('click',()=>modalOverlay.classList.remove('active'));
+  modalOverlay.addEventListener('click',e=>{if(e.target===modalOverlay)modalOverlay.classList.remove('active');});
+  searchInput.addEventListener('input', render);
+  statusFilter.addEventListener('change', render);
+  categoryFilter.addEventListener('change', render);
+  contactFilter.addEventListener('change', render);
+  render();
+});
+</script>
+</body>
+</html>
