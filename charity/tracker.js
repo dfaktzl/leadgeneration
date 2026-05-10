@@ -1,8 +1,52 @@
-document.addEventListener('DOMContentLoaded', () => {
+// --- CLOUD SYNC CONFIGURATION ---
+// To enable real-time cloud sync, create two tables in Supabase:
+// 1. 'tracker_state' (columns: project_name (text, primary key), state_json (jsonb))
+// 2. 'shared_notepad' (columns: project_name (text, primary key), note_text (text))
+// Enable Realtime for BOTH tables. Paste your URL and Anon Key below.
+const SUPABASE_URL = ''; 
+const SUPABASE_KEY = ''; 
+
+document.addEventListener('DOMContentLoaded', async () => {
   const STORAGE_KEY = 'phb_partner_tracker';
-  function loadState() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; } }
-  function saveState(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
-  let state = loadState();
+  const NOTEPAD_KEY = STORAGE_KEY + '_notepad';
+  
+  let state = {};
+  let supabase = null;
+
+  if (SUPABASE_URL && SUPABASE_KEY && typeof window.supabase !== 'undefined') {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+
+  function mergeState(newState) {
+    state = { ...state, ...newState };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (typeof render === 'function') render();
+  }
+
+  async function loadState() {
+    state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (supabase) {
+      try {
+        const { data } = await supabase.from('tracker_state').select('state_json').eq('project_name', STORAGE_KEY).single();
+        if (data && data.state_json) {
+          state = { ...state, ...data.state_json };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+      } catch(e) { console.error('Cloud load error:', e); }
+    }
+  }
+
+  async function saveState(s) {
+    state = { ...state, ...s };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (supabase) {
+      try {
+        await supabase.from('tracker_state').upsert({ project_name: STORAGE_KEY, state_json: state });
+      } catch(e) { console.error('Cloud save error:', e); }
+    }
+  }
+
+  await loadState();
 
   const ALL_LEADS = [].concat(
     typeof LEADS_CHARITY_1 !== 'undefined' ? LEADS_CHARITY_1 : [],
@@ -181,11 +225,43 @@ document.addEventListener('DOMContentLoaded', () => {
   statusFilter.addEventListener('change', render);
   categoryFilter.addEventListener('change', render);
   contactFilter.addEventListener('change', render);
-  
   const notepad = document.getElementById('global-notepad');
   if (notepad) {
-    notepad.value = localStorage.getItem(STORAGE_KEY + '_notepad') || '';
-    notepad.addEventListener('input', e => localStorage.setItem(STORAGE_KEY + '_notepad', e.target.value));
+    notepad.value = localStorage.getItem(NOTEPAD_KEY) || '';
+    if (supabase) {
+      supabase.from('shared_notepad').select('note_text').eq('project_name', STORAGE_KEY).single().then(({data}) => {
+        if (data && data.note_text) {
+          notepad.value = data.note_text;
+          localStorage.setItem(NOTEPAD_KEY, data.note_text);
+        }
+      }).catch(e=>console.error('Notepad load error:', e));
+    }
+    
+    let debounceTimer;
+    notepad.addEventListener('input', e => {
+      const val = e.target.value;
+      localStorage.setItem(NOTEPAD_KEY, val);
+      if (supabase) {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          supabase.from('shared_notepad').upsert({ project_name: STORAGE_KEY, note_text: val }).catch(e=>console.error('Notepad save error:', e));
+        }, 500);
+      }
+    });
+  }
+
+  if (supabase) {
+    supabase.channel('custom-all-channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tracker_state', filter: `project_name=eq.${STORAGE_KEY}` }, payload => {
+        if (payload.new && payload.new.state_json) mergeState(payload.new.state_json);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'shared_notepad', filter: `project_name=eq.${STORAGE_KEY}` }, payload => {
+        if (notepad && document.activeElement !== notepad && payload.new) {
+          notepad.value = payload.new.note_text || '';
+          localStorage.setItem(NOTEPAD_KEY, notepad.value);
+        }
+      })
+      .subscribe();
   }
 
   render();
