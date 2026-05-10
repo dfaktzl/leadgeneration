@@ -4,9 +4,28 @@ document.addEventListener('DOMContentLoaded', () => {
   function saveState(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
   let state = loadState();
 
-  const categories = [...new Set(LEADS.map(l => l.category))].sort();
+  // Tab support: use globals if available, else fall back to LEADS only
+  let currentTab = 'perth';
+  function getActiveLeads() {
+    if (currentTab === 'australia' && typeof LEADS_AU !== 'undefined') {
+      return [].concat(
+        typeof LEADS_AU !== 'undefined' ? LEADS_AU : [],
+        typeof LEADS_AU_2 !== 'undefined' ? LEADS_AU_2 : [],
+        typeof LEADS_AU_3 !== 'undefined' ? LEADS_AU_3 : [],
+        typeof LEADS_AU_4 !== 'undefined' ? LEADS_AU_4 : [],
+        typeof LEADS_AU_5 !== 'undefined' ? LEADS_AU_5 : []
+      );
+    }
+    return LEADS;
+  }
+
   const catSelect = document.getElementById('filter-category');
-  categories.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; catSelect.appendChild(o); });
+  function rebuildCategories() {
+    catSelect.innerHTML = '<option value="all">All Categories</option>';
+    const cats = [...new Set(getActiveLeads().map(l => l.category))].sort();
+    cats.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; catSelect.appendChild(o); });
+  }
+  rebuildCategories();
 
   const grid = document.getElementById('card-grid');
   const searchInput = document.getElementById('search');
@@ -54,9 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function statusEmoji(s) { return {new:'🔵',contacted:'🟡',interested:'🟢','not-interested':'🔴','no-answer':'⚪',done:'✅'}[s]||'🔵'; }
 
   function updateStats() {
+    const leads = getActiveLeads();
     const c = {new:0,contacted:0,interested:0,'not-interested':0,'no-answer':0,done:0};
-    LEADS.forEach(l => { if(isDone(l.id)) c.done++; else c[getS(l.id)]++; });
-    const noWeb = LEADS.filter(l => !l.website).length;
+    leads.forEach(l => { if(isDone(l.id)) c.done++; else c[getS(l.id)]++; });
+    const noWeb = leads.filter(l => !l.website).length;
     statsBar.innerHTML = `
       <span class="stat"><span class="stat-dot" style="background:#39d0d8"></span>New: ${c.new}</span>
       <span class="stat"><span class="stat-dot" style="background:#d29922"></span>Contacted: ${c.contacted}</span>
@@ -65,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <span class="stat"><span class="stat-dot" style="background:#8b949e"></span>No Ans: ${c['no-answer']}</span>
       <span class="stat"><span class="stat-dot" style="background:#a371f7"></span>Done: ${c.done}</span>
       <span class="stat" style="color:#f85149">🚫 No Website: ${noWeb}</span>
-      <span class="stat" style="font-weight:700">Total: ${LEADS.length}</span>`;
+      <span class="stat" style="font-weight:700">Total: ${leads.length}</span>`;
   }
 
   function render() {
@@ -73,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sF = statusFilter.value;
     const cF = categoryFilter.value;
     const ctF = contactFilter.value;
-    const filtered = LEADS.filter(l => {
+    const filtered = getActiveLeads().filter(l => {
       if (search && !`${l.name} ${l.category} ${l.suburb} ${l.desc}`.toLowerCase().includes(search)) return false;
       const s = isDone(l.id) ? 'done' : getS(l.id);
       if (sF !== 'all' && s !== sF) return false;
@@ -136,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function openModal(id) {
-    const l = LEADS.find(x=>x.id===id); if(!l)return;
+    const l = getActiveLeads().find(x=>x.id===id); if(!l)return;
     const s=isDone(l.id)?'done':getS(l.id), n=getN(l.id);
     let ch='';
     if(l.phone)ch+=`<div>📞 <a href="tel:${l.phone}">${l.phone}</a></div>`;
@@ -168,5 +188,17 @@ document.addEventListener('DOMContentLoaded', () => {
   statusFilter.addEventListener('change', render);
   categoryFilter.addEventListener('change', render);
   contactFilter.addEventListener('change', render);
+
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentTab = btn.dataset.tab;
+      rebuildCategories();
+      render();
+    });
+  });
+
   render();
 });
