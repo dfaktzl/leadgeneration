@@ -3,13 +3,13 @@
 // 1. 'tracker_state' (columns: project_name (text, primary key), state_json (jsonb))
 // 2. 'shared_notepad' (columns: project_name (text, primary key), note_text (text))
 // Enable Realtime for BOTH tables. Paste your URL and Anon Key below.
-const SUPABASE_URL = ''; 
-const SUPABASE_KEY = ''; 
+const SUPABASE_URL = 'https://jsoazogqoowxxafbviel.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Fz4MKqPm4VASpoQe-EDaVg_ii6hAYhs';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const STORAGE_KEY = 'phb_partner_tracker';
   const NOTEPAD_KEY = STORAGE_KEY + '_notepad';
-  
+
   let state = {};
   let supabase = null;
 
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           state = { ...state, ...data.state_json };
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         }
-      } catch(e) { console.error('Cloud load error:', e); }
+      } catch (e) { console.error('Cloud load error:', e); }
     }
   }
 
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (supabase) {
       try {
         await supabase.from('tracker_state').upsert({ project_name: STORAGE_KEY, state_json: state });
-      } catch(e) { console.error('Cloud save error:', e); }
+      } catch (e) { console.error('Cloud save error:', e); }
     }
   }
 
@@ -103,12 +103,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     return `https://gemini.google.com/app?q=${prompt}`;
   }
 
-  function statusEmoji(s) { return {new:'🔵',contacted:'🟡',interested:'🟢','not-interested':'🔴','no-answer':'⚪',done:'✅'}[s]||'🔵'; }
+  function statusEmoji(s) { return { new: '🔵', contacted: '🟡', interested: '🟢', 'not-interested': '🔴', 'no-answer': '⚪', done: '✅' }[s] || '🔵'; }
 
   function updateStats() {
     const leads = ALL_LEADS;
-    const c = {new:0,contacted:0,interested:0,'not-interested':0,'no-answer':0,done:0};
-    leads.forEach(l => { if(isDone(l.id)) c.done++; else c[getS(l.id)]++; });
+    const c = { new: 0, contacted: 0, interested: 0, 'not-interested': 0, 'no-answer': 0, done: 0 };
+    leads.forEach(l => { if (isDone(l.id)) c.done++; else c[getS(l.id)]++; });
     statsBar.innerHTML = `
       <span class="stat"><span class="stat-dot" style="background:#39d0d8"></span>New: ${c.new}</span>
       <span class="stat"><span class="stat-dot" style="background:#d29922"></span>Contacted: ${c.contacted}</span>
@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (l.email) contacts.push(`<span class="contact-chip">✉️ <a href="mailto:${l.email}">${l.email}</a></span>`);
       if (l.website) contacts.push(`<span class="contact-chip">🌐 <a href="https://${l.website}" target="_blank" rel="noopener">${l.website}</a></span>`);
 
-      return `<div class="lead-card status-${s}${cb?' is-callback':''}" data-id="${l.id}">
+      return `<div class="lead-card status-${s}${cb ? ' is-callback' : ''}" data-id="${l.id}">
         <div class="card-top">
           <div><div class="card-name">${l.name}</div><div class="card-meta">📍 ${l.location}</div></div>
           <div class="card-badges">
@@ -152,18 +152,18 @@ document.addEventListener('DOMContentLoaded', async () => {
           </div>
         </div>
         <div class="card-desc">${l.desc}</div>
-        <div class="card-issues">${l.issues.slice(0,2).map(i=>`<div class="card-issue">${i}</div>`).join('')}</div>
+        <div class="card-issues">${l.issues.slice(0, 2).map(i => `<div class="card-issue">${i}</div>`).join('')}</div>
         <div class="card-contacts">${contacts.join('')}</div>
         <div class="card-actions">
           <select class="card-sel" data-id="${l.id}">
-            <option value="new" ${s==='new'?'selected':''}>🔵 New</option>
-            <option value="contacted" ${s==='contacted'?'selected':''}>🟡 Contacted</option>
-            <option value="interested" ${s==='interested'?'selected':''}>🟢 In Progress</option>
-            <option value="not-interested" ${s==='not-interested'?'selected':''}>🔴 Rejected</option>
-            <option value="no-answer" ${s==='no-answer'?'selected':''}>⚪ No Answer</option>
+            <option value="new" ${s === 'new' ? 'selected' : ''}>🔵 New</option>
+            <option value="contacted" ${s === 'contacted' ? 'selected' : ''}>🟡 Contacted</option>
+            <option value="interested" ${s === 'interested' ? 'selected' : ''}>🟢 In Progress</option>
+            <option value="not-interested" ${s === 'not-interested' ? 'selected' : ''}>🔴 Rejected</option>
+            <option value="no-answer" ${s === 'no-answer' ? 'selected' : ''}>⚪ No Answer</option>
           </select>
-          <button class="btn-done${done?' is-done':''}" data-id="${l.id}">${done?'✅ Secured':'☐ Secured'}</button>
-          <button class="btn-callback${cb?' active':''}" data-id="${l.id}">${cb?'📞 Call Back Needed':'📞 Call Back'}</button>
+          <button class="btn-done${done ? ' is-done' : ''}" data-id="${l.id}">${done ? '✅ Secured' : '☐ Secured'}</button>
+          <button class="btn-callback${cb ? ' active' : ''}" data-id="${l.id}">${cb ? '📞 Call Back Needed' : '📞 Call Back'}</button>
           <a class="btn-gemini" href="${geminiUrl(l)}" target="_blank" rel="noopener" title="Get AI outreach script">✨ Gemini</a>
         </div>
         <textarea class="card-notes" data-id="${l.id}" placeholder="Add notes...">${n}</textarea>
@@ -171,56 +171,56 @@ document.addEventListener('DOMContentLoaded', async () => {
     }).join('');
 
     grid.querySelectorAll('.card-sel').forEach(sel => {
-      sel.addEventListener('change', e => { e.stopPropagation(); const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].status=e.target.value; saveState(state); render(); });
+      sel.addEventListener('change', e => { e.stopPropagation(); const id = +e.target.dataset.id; if (!state[id]) state[id] = {}; state[id].status = e.target.value; saveState(state); render(); });
     });
     grid.querySelectorAll('.btn-done').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].done=!state[id].done; saveState(state); render(); });
+      btn.addEventListener('click', e => { e.stopPropagation(); const id = +e.target.dataset.id; if (!state[id]) state[id] = {}; state[id].done = !state[id].done; saveState(state); render(); });
     });
     grid.querySelectorAll('.btn-callback').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].callback=!state[id].callback; saveState(state); render(); });
+      btn.addEventListener('click', e => { e.stopPropagation(); const id = +e.target.dataset.id; if (!state[id]) state[id] = {}; state[id].callback = !state[id].callback; saveState(state); render(); });
     });
     grid.querySelectorAll('.card-notes').forEach(ta => {
-      ta.addEventListener('input', e => { const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].notes=e.target.value; saveState(state); });
+      ta.addEventListener('input', e => { const id = +e.target.dataset.id; if (!state[id]) state[id] = {}; state[id].notes = e.target.value; saveState(state); });
       ta.addEventListener('click', e => e.stopPropagation());
     });
     grid.querySelectorAll('.lead-card').forEach(card => {
-      card.addEventListener('click', e => { if(e.target.closest('select,textarea,a,button')) return; openModal(+card.dataset.id); });
+      card.addEventListener('click', e => { if (e.target.closest('select,textarea,a,button')) return; openModal(+card.dataset.id); });
     });
     updateStats();
   }
 
   function openModal(id) {
-    const l = ALL_LEADS.find(x=>x.id===id); if(!l)return;
-    const s=isDone(l.id)?'done':getS(l.id), n=getN(l.id);
-    let ch='';
-    if(l.phone)ch+=`<div>📞 <a href="tel:${l.phone}">${l.phone}</a></div>`;
-    if(l.email)ch+=`<div>✉️ <a href="mailto:${l.email}">${l.email}</a></div>`;
-    if(!l.phone&&!l.email)ch+=`<div>📝 Contact via website</div>`;
+    const l = ALL_LEADS.find(x => x.id === id); if (!l) return;
+    const s = isDone(l.id) ? 'done' : getS(l.id), n = getN(l.id);
+    let ch = '';
+    if (l.phone) ch += `<div>📞 <a href="tel:${l.phone}">${l.phone}</a></div>`;
+    if (l.email) ch += `<div>✉️ <a href="mailto:${l.email}">${l.email}</a></div>`;
+    if (!l.phone && !l.email) ch += `<div>📝 Contact via website</div>`;
     modalContent.innerHTML = `
       <h2>${l.name}</h2>
-      <div class="m-meta">${l.category} · 📍 ${l.location} · ${statusEmoji(s)} ${s.replace('-',' ')}</div>
-      ${l.website?`<div class="m-website m-section">🌐 <a href="https://${l.website}" target="_blank">${l.website}</a></div>`:''}
+      <div class="m-meta">${l.category} · 📍 ${l.location} · ${statusEmoji(s)} ${s.replace('-', ' ')}</div>
+      ${l.website ? `<div class="m-website m-section">🌐 <a href="https://${l.website}" target="_blank">${l.website}</a></div>` : ''}
       <div class="m-desc">${l.desc}</div>
-      <div class="m-section"><div class="m-label">Action Items / Pitch</div>${l.issues.map(i=>`<div class="m-issue">${i}</div>`).join('')}</div>
+      <div class="m-section"><div class="m-label">Action Items / Pitch</div>${l.issues.map(i => `<div class="m-issue">${i}</div>`).join('')}</div>
       <div class="m-section m-contacts"><div class="m-label">Contact Details</div>${ch}</div>
       <div class="m-section"><div class="m-label">Status</div>
         <select id="modal-status" style="width:100%;padding:10px;font-size:1rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--font)">
-          <option value="new" ${s==='new'?'selected':''}>🔵 New</option>
-          <option value="contacted" ${s==='contacted'?'selected':''}>🟡 Contacted</option>
-          <option value="interested" ${s==='interested'?'selected':''}>🟢 In Progress / App Sent</option>
-          <option value="not-interested" ${s==='not-interested'?'selected':''}>🔴 Rejected</option>
-          <option value="no-answer" ${s==='no-answer'?'selected':''}>⚪ No Answer</option>
+          <option value="new" ${s === 'new' ? 'selected' : ''}>🔵 New</option>
+          <option value="contacted" ${s === 'contacted' ? 'selected' : ''}>🟡 Contacted</option>
+          <option value="interested" ${s === 'interested' ? 'selected' : ''}>🟢 In Progress / App Sent</option>
+          <option value="not-interested" ${s === 'not-interested' ? 'selected' : ''}>🔴 Rejected</option>
+          <option value="no-answer" ${s === 'no-answer' ? 'selected' : ''}>⚪ No Answer</option>
         </select>
       </div>
       <div class="m-section"><div class="m-label">Notes</div><textarea id="modal-notes" style="width:100%;min-height:80px;padding:10px;font-size:0.95rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--font)">${n}</textarea></div>
       <div class="m-section" style="text-align:center"><a class="btn-gemini" href="${geminiUrl(l)}" target="_blank" rel="noopener" style="display:inline-block;padding:12px 24px;font-size:1rem">✨ Draft Outreach with Gemini</a></div>`;
-    document.getElementById('modal-status').addEventListener('change',e=>{if(!state[id])state[id]={};state[id].status=e.target.value;saveState(state);render();});
-    document.getElementById('modal-notes').addEventListener('input',e=>{if(!state[id])state[id]={};state[id].notes=e.target.value;saveState(state);});
+    document.getElementById('modal-status').addEventListener('change', e => { if (!state[id]) state[id] = {}; state[id].status = e.target.value; saveState(state); render(); });
+    document.getElementById('modal-notes').addEventListener('input', e => { if (!state[id]) state[id] = {}; state[id].notes = e.target.value; saveState(state); });
     modalOverlay.classList.add('active');
   }
 
-  modalClose.addEventListener('click',()=>modalOverlay.classList.remove('active'));
-  modalOverlay.addEventListener('click',e=>{if(e.target===modalOverlay)modalOverlay.classList.remove('active');});
+  modalClose.addEventListener('click', () => modalOverlay.classList.remove('active'));
+  modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) modalOverlay.classList.remove('active'); });
   searchInput.addEventListener('input', render);
   statusFilter.addEventListener('change', render);
   categoryFilter.addEventListener('change', render);
@@ -229,14 +229,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (notepad) {
     notepad.value = localStorage.getItem(NOTEPAD_KEY) || '';
     if (supabase) {
-      supabase.from('shared_notepad').select('note_text').eq('project_name', STORAGE_KEY).single().then(({data}) => {
+      supabase.from('shared_notepad').select('note_text').eq('project_name', STORAGE_KEY).single().then(({ data }) => {
         if (data && data.note_text) {
           notepad.value = data.note_text;
           localStorage.setItem(NOTEPAD_KEY, data.note_text);
         }
-      }).catch(e=>console.error('Notepad load error:', e));
+      }).catch(e => console.error('Notepad load error:', e));
     }
-    
+
     let debounceTimer;
     notepad.addEventListener('input', e => {
       const val = e.target.value;
@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (supabase) {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-          supabase.from('shared_notepad').upsert({ project_name: STORAGE_KEY, note_text: val }).catch(e=>console.error('Notepad save error:', e));
+          supabase.from('shared_notepad').upsert({ project_name: STORAGE_KEY, note_text: val }).catch(e => console.error('Notepad save error:', e));
         }, 500);
       }
     });

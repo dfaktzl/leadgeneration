@@ -1,10 +1,5 @@
-// --- CLOUD SYNC CONFIGURATION ---
-// To enable real-time cloud sync, create two tables in Supabase:
-// 1. 'tracker_state' (columns: project_name (text, primary key), state_json (jsonb))
-// 2. 'shared_notepad' (columns: project_name (text, primary key), note_text (text))
-// Enable Realtime for BOTH tables. Paste your URL and Anon Key below.
-const SUPABASE_URL = ''; 
-const SUPABASE_KEY = ''; 
+const SUPABASE_URL = 'https://jsoazogqoowxxafbviel.supabase.co'; 
+const SUPABASE_KEY = 'sb_publishable_Fz4MKqPm4VASpoQe-EDaVg_ii6hAYhs'; 
 
 document.addEventListener('DOMContentLoaded', async () => {
   const STORAGE_KEY = 'ptv_lead_tracker';
