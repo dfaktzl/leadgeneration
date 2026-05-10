@@ -35,6 +35,9 @@ body {
 .cat-health { border-color: rgba(88, 166, 255, 0.4); color: #58a6ff; } /* Partner */
 .cat-mechanic { border-color: rgba(210, 153, 34, 0.4); color: #d29922; } /* Construction */
 .cat-retail { border-color: rgba(163, 113, 247, 0.4); color: #a371f7; } /* Strata */
+.lead-card.is-callback { border-color: rgba(56, 189, 248, 0.6) !important; background: linear-gradient(180deg, rgba(56, 189, 248, 0.08) 0%, rgba(56, 189, 248, 0.02) 100%), var(--panel) !important; box-shadow: 0 0 15px rgba(56, 189, 248, 0.15); }
+.btn-callback { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+.btn-callback.active { background: rgba(56, 189, 248, 0.2); border-color: #38bdf8; color: #38bdf8; }
 `;
 
 const html = `<!DOCTYPE html>
@@ -89,6 +92,9 @@ ${extraCSS}
       </select>
     </div>
   </div>
+</div>
+<div class="admin-notepad" style="max-width:1440px; margin: 12px auto; padding: 0 24px;">
+  <textarea id="global-notepad" placeholder="Admin shared notes (Cloud Synced)..." style="width:100%; height:60px; background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:12px; font-family:var(--font); resize:vertical;"></textarea>
 </div>
 <div class="stats-bar" id="stats-bar" style="max-width:1440px;margin:0 auto;padding:12px 24px;display:flex;gap:12px;flex-wrap:wrap;font-size:0.8rem"></div>
 <main class="main" id="main"><div class="card-grid" id="card-grid"></div></main>

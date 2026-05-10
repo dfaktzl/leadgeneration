@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Partner Tracker">
-<title>Perth Housing Bridge — Partner & Grant Tracker</title>
+<title>Perth Housing Bridge — Partner Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -145,6 +145,9 @@ body {
 }
 .help-btn{padding:8px 16px;border-radius:8px;border:1px solid #3fb950;background:rgba(63,185,80,0.1);color:#3fb950;font-family:var(--font);font-size:0.85rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.2s;white-space:nowrap}
 .help-btn:hover{background:#3fb950;color:#000}
+.lead-card.is-callback { border-color: rgba(56, 189, 248, 0.6) !important; background: linear-gradient(180deg, rgba(56, 189, 248, 0.08) 0%, rgba(56, 189, 248, 0.02) 100%), var(--panel) !important; box-shadow: 0 0 15px rgba(56, 189, 248, 0.15); }
+.btn-callback { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+.btn-callback.active { background: rgba(56, 189, 248, 0.2); border-color: #38bdf8; color: #38bdf8; }
 
 </style>
 </head>
@@ -158,13 +161,13 @@ body {
   <div class="topbar-inner">
     <h1 class="app-title">🏠 Perth Housing Bridge <span>Partner Tracker</span></h1>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-      <a class="help-btn" href="mailto:psy@xfer.au?subject=Partner%20Tracker%20Help">❓ Confused about anything?</a>
+      <a class="help-btn" href="mailto:psy@xfer.au?subject=Charity%20Tracker%20Help">❓ Confused about anything?</a>
     </div>
   </div>
 </header>
 <div class="toolbar">
   <div class="toolbar-inner">
-    <div class="search-box"><input type="text" id="search" placeholder="Search partners, grants, sponsors..." autocomplete="off"></div>
+    <div class="search-box"><input type="text" id="search" placeholder="Search partners, grants..." autocomplete="off"></div>
     <div class="filter-group">
       <select id="filter-status">
         <option value="all">All Statuses</option>
@@ -183,6 +186,9 @@ body {
       </select>
     </div>
   </div>
+</div>
+<div class="admin-notepad" style="max-width:1440px; margin: 12px auto; padding: 0 24px;">
+  <textarea id="global-notepad" placeholder="Admin shared notes (Cloud Synced)..." style="width:100%; height:60px; background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:12px; font-family:var(--font); resize:vertical;"></textarea>
 </div>
 <div class="stats-bar" id="stats-bar" style="max-width:1440px;margin:0 auto;padding:12px 24px;display:flex;gap:12px;flex-wrap:wrap;font-size:0.8rem"></div>
 <main class="main" id="main"><div class="card-grid" id="card-grid"></div></main>
@@ -379,6 +385,7 @@ body {
   function getS(id) { return state[id]?.status || 'new'; }
   function getN(id) { return state[id]?.notes || ''; }
   function isDone(id) { return state[id]?.done || false; }
+  function isCallback(id) { return state[id]?.callback || false; }
 
   function contactType(l) {
     if (l.email || l.phone) return 'direct';
@@ -441,12 +448,13 @@ body {
       const s = isDone(l.id) ? 'done' : getS(l.id);
       const n = getN(l.id);
       const done = isDone(l.id);
+      const cb = isCallback(l.id);
       const contacts = [];
       if (l.phone) contacts.push(`<span class="contact-chip">📞 <a href="tel:${l.phone}">${l.phone}</a></span>`);
       if (l.email) contacts.push(`<span class="contact-chip">✉️ <a href="mailto:${l.email}">${l.email}</a></span>`);
       if (l.website) contacts.push(`<span class="contact-chip">🌐 <a href="https://${l.website}" target="_blank" rel="noopener">${l.website}</a></span>`);
 
-      return `<div class="lead-card status-${s}" data-id="${l.id}">
+      return `<div class="lead-card status-${s}${cb?' is-callback':''}" data-id="${l.id}">
         <div class="card-top">
           <div><div class="card-name">${l.name}</div><div class="card-meta">📍 ${l.location}</div></div>
           <div class="card-badges">
@@ -465,6 +473,7 @@ body {
             <option value="no-answer" ${s==='no-answer'?'selected':''}>⚪ No Answer</option>
           </select>
           <button class="btn-done${done?' is-done':''}" data-id="${l.id}">${done?'✅ Secured':'☐ Secured'}</button>
+          <button class="btn-callback${cb?' active':''}" data-id="${l.id}">${cb?'📞 Call Back Needed':'📞 Call Back'}</button>
           <a class="btn-gemini" href="${geminiUrl(l)}" target="_blank" rel="noopener" title="Get AI outreach script">✨ Gemini</a>
         </div>
         <textarea class="card-notes" data-id="${l.id}" placeholder="Add notes...">${n}</textarea>
@@ -476,6 +485,9 @@ body {
     });
     grid.querySelectorAll('.btn-done').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].done=!state[id].done; saveState(state); render(); });
+    });
+    grid.querySelectorAll('.btn-callback').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].callback=!state[id].callback; saveState(state); render(); });
     });
     grid.querySelectorAll('.card-notes').forEach(ta => {
       ta.addEventListener('input', e => { const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].notes=e.target.value; saveState(state); });
@@ -523,6 +535,13 @@ body {
   statusFilter.addEventListener('change', render);
   categoryFilter.addEventListener('change', render);
   contactFilter.addEventListener('change', render);
+  
+  const notepad = document.getElementById('global-notepad');
+  if (notepad) {
+    notepad.value = localStorage.getItem(STORAGE_KEY + '_notepad') || '';
+    notepad.addEventListener('input', e => localStorage.setItem(STORAGE_KEY + '_notepad', e.target.value));
+  }
+
   render();
 });
 </script>

@@ -150,6 +150,9 @@ body {
 .cat-health { border-color: rgba(88, 166, 255, 0.4); color: #58a6ff; } /* Partner */
 .cat-mechanic { border-color: rgba(210, 153, 34, 0.4); color: #d29922; } /* Construction */
 .cat-retail { border-color: rgba(163, 113, 247, 0.4); color: #a371f7; } /* Strata */
+.lead-card.is-callback { border-color: rgba(56, 189, 248, 0.6) !important; background: linear-gradient(180deg, rgba(56, 189, 248, 0.08) 0%, rgba(56, 189, 248, 0.02) 100%), var(--panel) !important; box-shadow: 0 0 15px rgba(56, 189, 248, 0.15); }
+.btn-callback { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+.btn-callback.active { background: rgba(56, 189, 248, 0.2); border-color: #38bdf8; color: #38bdf8; }
 
 </style>
 </head>
@@ -188,6 +191,9 @@ body {
       </select>
     </div>
   </div>
+</div>
+<div class="admin-notepad" style="max-width:1440px; margin: 12px auto; padding: 0 24px;">
+  <textarea id="global-notepad" placeholder="Admin shared notes (Cloud Synced)..." style="width:100%; height:60px; background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:12px; font-family:var(--font); resize:vertical;"></textarea>
 </div>
 <div class="stats-bar" id="stats-bar" style="max-width:1440px;margin:0 auto;padding:12px 24px;display:flex;gap:12px;flex-wrap:wrap;font-size:0.8rem"></div>
 <main class="main" id="main"><div class="card-grid" id="card-grid"></div></main>
@@ -492,6 +498,7 @@ body {
   function getS(id) { return state[id]?.status || 'new'; }
   function getN(id) { return state[id]?.notes || ''; }
   function isDone(id) { return state[id]?.done || false; }
+  function isCallback(id) { return state[id]?.callback || false; }
 
   function contactType(l) {
     if (l.email || l.phone) return 'direct';
@@ -555,12 +562,13 @@ body {
       const s = isDone(l.id) ? 'done' : getS(l.id);
       const n = getN(l.id);
       const done = isDone(l.id);
+      const cb = isCallback(l.id);
       const contacts = [];
       if (l.phone) contacts.push(`<span class="contact-chip">📞 <a href="tel:${l.phone}">${l.phone}</a></span>`);
       if (l.email) contacts.push(`<span class="contact-chip">✉️ <a href="mailto:${l.email}">${l.email}</a></span>`);
       if (l.website) contacts.push(`<span class="contact-chip">🌐 <a href="https://${l.website}" target="_blank" rel="noopener">${l.website}</a></span>`);
 
-      return `<div class="lead-card status-${s}" data-id="${l.id}">
+      return `<div class="lead-card status-${s}${cb?' is-callback':''}" data-id="${l.id}">
         <div class="card-top">
           <div><div class="card-name">${l.name}</div><div class="card-meta">📍 ${l.location}</div></div>
           <div class="card-badges">
@@ -579,6 +587,7 @@ body {
             <option value="no-answer" ${s==='no-answer'?'selected':''}>⚪ No Answer</option>
           </select>
           <button class="btn-done${done?' is-done':''}" data-id="${l.id}">${done?'✅ Won':'☐ Won'}</button>
+          <button class="btn-callback${cb?' active':''}" data-id="${l.id}">${cb?'📞 Call Back Needed':'📞 Call Back'}</button>
           <a class="btn-gemini" href="${geminiUrl(l)}" target="_blank" rel="noopener" title="Get AI outreach script">✨ Gemini</a>
         </div>
         <textarea class="card-notes" data-id="${l.id}" placeholder="Add notes...">${n}</textarea>
@@ -590,6 +599,9 @@ body {
     });
     grid.querySelectorAll('.btn-done').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].done=!state[id].done; saveState(state); render(); });
+    });
+    grid.querySelectorAll('.btn-callback').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].callback=!state[id].callback; saveState(state); render(); });
     });
     grid.querySelectorAll('.card-notes').forEach(ta => {
       ta.addEventListener('input', e => { const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].notes=e.target.value; saveState(state); });
@@ -637,6 +649,13 @@ body {
   statusFilter.addEventListener('change', render);
   categoryFilter.addEventListener('change', render);
   contactFilter.addEventListener('change', render);
+  
+  const notepad = document.getElementById('global-notepad');
+  if (notepad) {
+    notepad.value = localStorage.getItem(STORAGE_KEY + '_notepad') || '';
+    notepad.addEventListener('input', e => localStorage.setItem(STORAGE_KEY + '_notepad', e.target.value));
+  }
+
   render();
 });
 </script>

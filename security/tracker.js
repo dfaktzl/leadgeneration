@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function getS(id) { return state[id]?.status || 'new'; }
   function getN(id) { return state[id]?.notes || ''; }
   function isDone(id) { return state[id]?.done || false; }
+  function isCallback(id) { return state[id]?.callback || false; }
 
   function contactType(l) {
     if (l.email || l.phone) return 'direct';
@@ -96,12 +97,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const s = isDone(l.id) ? 'done' : getS(l.id);
       const n = getN(l.id);
       const done = isDone(l.id);
+      const cb = isCallback(l.id);
       const contacts = [];
       if (l.phone) contacts.push(`<span class="contact-chip">📞 <a href="tel:${l.phone}">${l.phone}</a></span>`);
       if (l.email) contacts.push(`<span class="contact-chip">✉️ <a href="mailto:${l.email}">${l.email}</a></span>`);
       if (l.website) contacts.push(`<span class="contact-chip">🌐 <a href="https://${l.website}" target="_blank" rel="noopener">${l.website}</a></span>`);
 
-      return `<div class="lead-card status-${s}" data-id="${l.id}">
+      return `<div class="lead-card status-${s}${cb?' is-callback':''}" data-id="${l.id}">
         <div class="card-top">
           <div><div class="card-name">${l.name}</div><div class="card-meta">📍 ${l.location}</div></div>
           <div class="card-badges">
@@ -120,6 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <option value="no-answer" ${s==='no-answer'?'selected':''}>⚪ No Answer</option>
           </select>
           <button class="btn-done${done?' is-done':''}" data-id="${l.id}">${done?'✅ Won':'☐ Won'}</button>
+          <button class="btn-callback${cb?' active':''}" data-id="${l.id}">${cb?'📞 Call Back Needed':'📞 Call Back'}</button>
           <a class="btn-gemini" href="${geminiUrl(l)}" target="_blank" rel="noopener" title="Get AI outreach script">✨ Gemini</a>
         </div>
         <textarea class="card-notes" data-id="${l.id}" placeholder="Add notes...">${n}</textarea>
@@ -131,6 +134,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     grid.querySelectorAll('.btn-done').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].done=!state[id].done; saveState(state); render(); });
+    });
+    grid.querySelectorAll('.btn-callback').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].callback=!state[id].callback; saveState(state); render(); });
     });
     grid.querySelectorAll('.card-notes').forEach(ta => {
       ta.addEventListener('input', e => { const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].notes=e.target.value; saveState(state); });
@@ -178,5 +184,12 @@ document.addEventListener('DOMContentLoaded', () => {
   statusFilter.addEventListener('change', render);
   categoryFilter.addEventListener('change', render);
   contactFilter.addEventListener('change', render);
+  
+  const notepad = document.getElementById('global-notepad');
+  if (notepad) {
+    notepad.value = localStorage.getItem(STORAGE_KEY + '_notepad') || '';
+    notepad.addEventListener('input', e => localStorage.setItem(STORAGE_KEY + '_notepad', e.target.value));
+  }
+
   render();
 });

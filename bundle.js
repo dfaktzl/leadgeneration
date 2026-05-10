@@ -16,6 +16,9 @@ const extraCSS = `
 .tab-count{font-size:0.75rem;padding:2px 6px;border-radius:999px;background:rgba(57,208,216,0.15);color:var(--cyan);margin-left:6px}
 .help-btn{padding:8px 16px;border-radius:8px;border:1px solid var(--yellow);background:rgba(210,153,34,0.1);color:var(--yellow);font-family:var(--font);font-size:0.85rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.2s;white-space:nowrap}
 .help-btn:hover{background:var(--yellow);color:#000}
+.lead-card.is-callback { border-color: rgba(56, 189, 248, 0.6) !important; background: linear-gradient(180deg, rgba(56, 189, 248, 0.08) 0%, rgba(56, 189, 248, 0.02) 100%), var(--panel) !important; box-shadow: 0 0 15px rgba(56, 189, 248, 0.15); }
+.btn-callback { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+.btn-callback.active { background: rgba(56, 189, 248, 0.2); border-color: #38bdf8; color: #38bdf8; }
 `;
 
 const html = `<!DOCTYPE html>
@@ -43,7 +46,7 @@ ${extraCSS}
 </nav>
 <header class="topbar">
   <div class="topbar-inner">
-    <h1 class="app-title">} Perth Tech Value <span>Lead Tracker</span></h1>
+    <h1 class="app-title">💻 Perth Tech Value <span>Lead Tracker</span></h1>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       <div class="tab-bar">
         <button class="tab-btn active" data-tab="perth">📍 Perth Local <span class="tab-count">100</span></button>
@@ -62,6 +65,9 @@ ${extraCSS}
       <select id="filter-contact"><option value="all">All Contact Types</option><option value="direct">Has Email/Phone</option><option value="form-only">Contact Form Only</option><option value="none">No Website</option></select>
     </div>
   </div>
+</div>
+<div class="admin-notepad" style="max-width:1440px; margin: 12px auto; padding: 0 24px;">
+  <textarea id="global-notepad" placeholder="Admin shared notes (Cloud Synced)..." style="width:100%; height:60px; background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:12px; font-family:var(--font); resize:vertical;"></textarea>
 </div>
 <div class="stats-bar" id="stats-bar" style="max-width:1440px;margin:0 auto;padding:12px 24px;display:flex;gap:12px;flex-wrap:wrap;font-size:0.8rem"></div>
 <main class="main" id="main"><div class="card-grid" id="card-grid"></div></main>
