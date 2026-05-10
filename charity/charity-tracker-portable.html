@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Partner Tracker">
+<title>Perth Housing Bridge — Partner & Grant Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e1117; --bg2: #161b22; --card: #1c2128; --border: #2d333b;
+  --text: #e6edf3; --muted: #8b949e;
+  --cyan: #39d0d8; --green: #3fb950; --yellow: #d29922; --red: #f85149; --purple: #a371f7; --orange: #e3872d;
+  --font: 'Outfit', system-ui, sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { font-family: var(--font); background: var(--bg); color: var(--text); }
+body { min-height: 100vh; }
+
+/* Top bar */
+.topbar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 16px 24px; position: sticky; top:0; z-index:50; }
+.topbar-inner { max-width: 1440px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.app-title { font-size: 1.4rem; font-weight: 700; }
+.app-title span { color: var(--cyan); font-weight: 400; }
+.stats-bar { display: flex; gap: 16px; font-size: 0.8rem; flex-wrap: wrap; }
+.stat { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 6px; background: rgba(255,255,255,0.04); }
+.stat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* Toolbar */
+.toolbar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 12px 24px; position: sticky; top: 60px; z-index: 49; }
+.toolbar-inner { max-width: 1440px; margin: 0 auto; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.search-box { flex: 1; min-width: 200px; }
+.search-box input { width: 100%; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: var(--font); font-size: 0.95rem; }
+.search-box input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(57,208,216,0.15); }
+.filter-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.filter-group select { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: var(--font); font-size: 0.85rem; cursor: pointer; }
+
+/* Main grid */
+.main { max-width: 1440px; margin: 0 auto; padding: 24px; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }
+
+/* Lead card */
+.lead-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: all 0.2s; position: relative; }
+.lead-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+
+/* Color-coded card borders */
+.lead-card.status-contacted { border-left: 4px solid var(--yellow); }
+.lead-card.status-interested { border-left: 4px solid var(--green); }
+.lead-card.status-not-interested { border-left: 4px solid var(--red); }
+.lead-card.status-no-answer { border-left: 4px solid var(--muted); }
+.lead-card.status-done { border-left: 4px solid var(--purple); opacity: 0.6; }
+
+/* RED glow for no-website businesses */
+.lead-card.no-website { border-color: rgba(248,81,73,0.4); background: rgba(248,81,73,0.05); }
+.lead-card.no-website:hover { box-shadow: 0 4px 20px rgba(248,81,73,0.15); }
+
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.card-name { font-size: 1.05rem; font-weight: 600; line-height: 1.3; }
+.card-badges { display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0; }
+
+/* Colorful category badges */
+.badge-cat { font-size: 0.65rem; padding: 3px 8px; border-radius: 999px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
+.badge-status { font-size: 0.65rem; padding: 3px 8px; border-radius: 999px; font-weight: 600; white-space: nowrap; }
+
+/* Category colors */
+.cat-cafe,.cat-bakery,.cat-restaurant,.cat-takeaway,.cat-butcher { background: rgba(227,135,45,0.2); color: #e3872d; }
+.cat-mechanic,.cat-plumber,.cat-electrician,.cat-auto { background: rgba(57,208,216,0.15); color: #39d0d8; }
+.cat-accounting,.cat-bookkeeping,.cat-tax { background: rgba(163,113,247,0.15); color: #a371f7; }
+.cat-photography,.cat-video,.cat-media { background: rgba(248,81,73,0.15); color: #f85149; }
+.cat-health,.cat-dentist,.cat-vet,.cat-pharmacy { background: rgba(63,185,80,0.15); color: #3fb950; }
+.cat-retail,.cat-beauty,.cat-fitness { background: rgba(210,153,34,0.15); color: #d29922; }
+.cat-other { background: rgba(139,148,158,0.15); color: #8b949e; }
+
+/* No website tag */
+.badge-noweb { background: rgba(248,81,73,0.25); color: #f85149; }
+.badge-hasweb { background: rgba(63,185,80,0.15); color: #3fb950; }
+
+.card-meta { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
+.card-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card-issues { display: flex; flex-direction: column; gap: 3px; }
+.card-issue { font-size: 0.78rem; color: var(--text); padding: 4px 8px; background: rgba(57,208,216,0.06); border-radius: 6px; line-height: 1.4; }
+.card-issue::before { content: '→'; color: var(--cyan); margin-right: 6px; font-weight: 700; }
+.card-contacts { display: flex; gap: 6px; flex-wrap: wrap; }
+.contact-chip { font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; background: var(--bg); border: 1px solid var(--border); }
+.contact-chip a { color: var(--cyan); text-decoration: none; }
+
+/* Card actions row */
+.card-actions { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+.card-actions select { flex: 1; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: var(--font); font-size: 0.8rem; cursor: pointer; }
+.btn-done { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--green); background: rgba(63,185,80,0.1); color: var(--green); font-family: var(--font); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.btn-done:hover { background: var(--green); color: #000; }
+.btn-done.is-done { background: var(--green); color: #000; }
+.btn-gemini { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--purple); background: rgba(163,113,247,0.1); color: var(--purple); font-family: var(--font); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; text-decoration: none; }
+.btn-gemini:hover { background: var(--purple); color: #fff; }
+
+.card-notes { width: 100%; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: var(--font); font-size: 0.8rem; resize: vertical; min-height: 32px; }
+.card-notes::placeholder { color: var(--muted); }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; padding: 24px; }
+.modal-overlay.active { display: flex; }
+.modal { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; }
+.modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; }
+.modal h2 { font-size: 1.5rem; margin-bottom: 8px; }
+.modal .m-meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 16px; }
+.modal .m-desc { color: var(--text); line-height: 1.6; margin-bottom: 20px; }
+.modal .m-section { margin-bottom: 20px; }
+.modal .m-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--cyan); font-weight: 600; margin-bottom: 8px; }
+.modal .m-issue { padding: 8px 12px; background: rgba(57,208,216,0.06); border-radius: 8px; margin-bottom: 6px; font-size: 0.9rem; }
+.modal .m-issue::before { content: '→'; color: var(--cyan); margin-right: 8px; }
+.modal .m-contacts a { color: var(--cyan); text-decoration: underline; }
+.modal .m-website a { color: var(--purple); text-decoration: underline; }
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 1.1rem; grid-column: 1 / -1; }
+
+@media (max-width: 500px) {
+  .card-grid { grid-template-columns: 1fr; }
+  .topbar-inner { flex-direction: column; align-items: flex-start; }
+}
+
+
+:root {
+  --cyan: #3fb950;
+  --yellow: #58a6ff;
+  --red: #f85149;
+  --bg: #0d1117;
+  --panel: #161b22;
+  --border: #30363d;
+  --text: #c9d1d9;
+  --muted: #8b949e;
+  --font: 'Outfit', sans-serif;
+}
+.app-title {
+  color: var(--text);
+}
+.app-title span {
+  color: #3fb950;
+}
+body {
+  background: radial-gradient(circle at 50% 0%, #0d2a1b 0%, var(--bg) 50%);
+}
+.help-btn{padding:8px 16px;border-radius:8px;border:1px solid #3fb950;background:rgba(63,185,80,0.1);color:#3fb950;font-family:var(--font);font-size:0.85rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.2s;white-space:nowrap}
+.help-btn:hover{background:#3fb950;color:#000}
+
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <h1 class="app-title">🏠 Perth Housing Bridge <span>Partner Tracker</span></h1>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <a class="help-btn" href="mailto:psy@xfer.au?subject=Partner%20Tracker%20Help">❓ Confused about anything?</a>
+    </div>
+  </div>
+</header>
+<div class="toolbar">
+  <div class="toolbar-inner">
+    <div class="search-box"><input type="text" id="search" placeholder="Search partners, grants, sponsors..." autocomplete="off"></div>
+    <div class="filter-group">
+      <select id="filter-status">
+        <option value="all">All Statuses</option>
+        <option value="new">🔵 New</option>
+        <option value="contacted">🟡 Contacted</option>
+        <option value="interested">🟢 In Progress / App Sent</option>
+        <option value="not-interested">🔴 Rejected</option>
+        <option value="no-answer">⚪ No Answer</option>
+        <option value="done">✅ Secured</option>
+      </select>
+      <select id="filter-category"><option value="all">All Categories</option></select>
+      <select id="filter-contact">
+        <option value="all">All Contact Types</option>
+        <option value="direct">Has Email/Phone</option>
+        <option value="form-only">Website Only</option>
+      </select>
+    </div>
+  </div>
+</div>
+<div class="stats-bar" id="stats-bar" style="max-width:1440px;margin:0 auto;padding:12px 24px;display:flex;gap:12px;flex-wrap:wrap;font-size:0.8rem"></div>
+<main class="main" id="main"><div class="card-grid" id="card-grid"></div></main>
+<div class="modal-overlay" id="modal-overlay"><div class="modal" id="modal"><button class="modal-close" id="modal-close">&times;</button><div id="modal-content"></div></div></div>
+<script>const LEADS_CHARITY_1 = [
+{id:1,name:"Lotterywest",category:"Grant",location:"WA State",phone:"133 777",email:"hello@lotterywest.wa.gov.au",website:"lotterywest.wa.gov.au",desc:"Major state government grant provider for WA community organizations supporting vulnerable people.",issues:["Community Investment Framework aligns with housing support","Check eligibility for first-time applicants","Ask about funding for capacity building"]},
+{id:2,name:"Telethon Kids Institute",category:"Partner",location:"Perth",phone:"(08) 6319 1000",email:"contact@telethonkids.org.au",website:"telethonkids.org.au",desc:"Research institute with resources that may help guide our youth housing and family support initiatives.",issues:["Potential for data sharing or research partnership","Explore their existing community programs","Check if they offer micro-grants for community partners"]},
+{id:3,name:"BHP Foundation",category:"Grant",location:"National",phone:"",email:"foundation@bhp.com",website:"bhp.com/sustainability/bhp-foundation",desc:"Global foundation with a strong focus on Australia, funding large-scale community and social resilience projects.",issues:["Focus on their 'social resilience' pillars","Long application cycle, need to start early","Might need an established track record, inquire about seed funding"]},
+{id:4,name:"Woodside Energy Community Grants",category:"Corporate",location:"Perth",phone:"(08) 9348 4000",email:"community@woodside.com.au",website:"woodside.com/sustainability/communities",desc:"Local oil and gas giant with a structured community grants program targeting WA initiatives.",issues:["Look for the next grant round opening dates","Align pitch with their community well-being focus","Ask if they do corporate volunteering (skills-based)"]},
+{id:5,name:"Minderoo Foundation",category:"Philanthropy",location:"Perth",phone:"(08) 6460 4949",email:"info@minderoo.org",website:"minderoo.org",desc:"Andrew and Nicola Forrest's philanthropic organization. Strong focus on ending vulnerability.",issues:["Align with their 'Communities' or 'Vulnerable Populations' initiatives","Highly competitive, needs a very strong pitch","Look into their current active campaigns"]},
+{id:6,name:"St Vincent de Paul Society WA (Vinnies)",category:"Partner",location:"WA",phone:"(08) 6323 7500",email:"info@svdpwa.org.au",website:"vinnies.org.au",desc:"Major charity providing emergency relief and housing support.",issues:["Great potential for referral partnership","Learn from their existing housing models","Can we collaborate on joint grant applications?"]},
+{id:7,name:"Rio Tinto Community Fund",category:"Corporate",location:"Perth",phone:"1800 500 500",email:"communities.wa@riotinto.com",website:"riotinto.com",desc:"Large mining company with substantial funding for regional and WA-wide community projects.",issues:["Identify if our services reach regional individuals moving to Perth","Look into their capacity building grants","Ask about corporate matched giving"]},
+{id:8,name:"Anglicare WA",category:"Partner",location:"WA",phone:"1300 11 44 46",email:"info@anglicarewa.org.au",website:"anglicarewa.org.au",desc:"Large non-profit offering housing, homelessness, and financial counselling services.",issues:["Potential for cross-referrals","Can we access any of their overflow resources?","Partnership for advocacy on homelessness"]},
+{id:9,name:"Stan Perron Charitable Foundation",category:"Philanthropy",location:"Perth",phone:"(08) 9226 3111",email:"info@perronfoundation.org.au",website:"perronfoundation.org.au",desc:"WA-based foundation funding health and community welfare, particularly for children and youth.",issues:["Focus on the youth/child impact of homelessness in our application","Review their specific grant guidelines","Submit an expression of interest"]},
+{id:10,name:"City of Perth Community Grants",category:"Grant",location:"Perth City",phone:"(08) 9461 3333",email:"grants@cityofperth.wa.gov.au",website:"perth.wa.gov.au",desc:"Local government grants for projects directly benefiting the City of Perth community.",issues:["We need to show direct impact within the CBD boundaries","Look into their 'Community Strengthening' category","Regular funding rounds throughout the year"]},
+{id:11,name:"Shelter WA",category:"Partner",location:"WA",phone:"(08) 9325 6660",email:"info@shelterwa.org.au",website:"shelterwa.org.au",desc:"Peak body for social and affordable housing and homelessness in WA.",issues:["We should become members for networking","Access their research and policy documents","Join their advocacy campaigns to raise our profile"]},
+{id:12,name:"Wesfarmers",category:"Corporate",location:"Perth",phone:"(08) 9327 4211",email:"info@wesfarmers.com.au",website:"wesfarmers.com.au/sustainability/community",desc:"Parent company of Bunnings, Kmart, Coles (formerly). Strong WA community support.",issues:["Look into community grants from their subsidiaries (e.g., Bunnings sausage sizzles)","Inquire about corporate philanthropic donations","Potential for in-kind donations (supplies)"]},
+{id:13,name:"Bankwest Foundation",category:"Corporate",location:"WA",phone:"13 17 19",email:"foundation@bankwest.com.au",website:"bankwest.com.au",desc:"Foundation offering grants and capacity building for WA community organizations.",issues:["They focus heavily on organizational capacity building","Look for their 'Community Grants' rounds","Good for funding CRM or IT infrastructure"]},
+{id:14,name:"Ruah Community Services",category:"Partner",location:"WA",phone:"13 78 24",email:"hello@ruah.org.au",website:"ruah.org.au",desc:"Major provider of services for homelessness, mental health, and family violence.",issues:["Essential to coordinate with their street outreach teams","Learn from their 'Housing First' approach","Referral pathways"]},
+{id:15,name:"Hawaiian Group",category:"Corporate",location:"Perth",phone:"(08) 9426 8888",email:"community@hawaiian.com.au",website:"hawaiian.com.au",desc:"WA property group with a strong 'Giving' program focused on youth and community.",issues:["They often partner for local community events","Ask about use of their shopping centre spaces for awareness/fundraising","Potential for direct sponsorship"]},
+{id:16,name:"Channel 7 Telethon Trust",category:"Grant",location:"WA",phone:"(08) 9344 0754",email:"telethon@telethon7.com",website:"telethon.com.au",desc:"Massive WA charity fund. Focuses on children and young people's health and wellbeing.",issues:["If our housing supports youth/children, we should apply","Requires rigorous reporting and tracking","Grants open annually"]},
+{id:17,name:"UnitingWA",category:"Partner",location:"WA",phone:"1300 663 298",email:"hello@unitingwa.org.au",website:"unitingwa.org.au",desc:"Community services agency dealing with complex needs including homelessness.",issues:["Good resource for complex case management advice","Partnership for shared resources","Look at their Tranby Engagement Hub model"]},
+{id:18,name:"Hancock Prospecting (Roy Hill Community Foundation)",category:"Corporate",location:"WA",phone:"(08) 9422 8111",email:"community@royhill.com.au",website:"royhill.com.au/community",desc:"Mining company foundation supporting WA communities.",issues:["Focus on programs that might affect their operational areas or general WA welfare","Look for structured grant rounds","Potential for large-scale funding"]},
+{id:19,name:"Foodbank WA",category:"Partner",location:"WA",phone:"(08) 9258 9277",email:"wa.info@foodbankwa.org.au",website:"foodbank.org.au/wa",desc:"Crucial partner for supplying food to our clients and shelters.",issues:["We need to register as an agency to access food","Inquire about mobile food bank services","Saves massive costs on food budgets"]},
+{id:20,name:"Ian Potter Foundation",category:"Philanthropy",location:"National",phone:"(03) 9650 3188",email:"admin@ianpotter.org.au",website:"ianpotter.org.au",desc:"Major Australian philanthropic foundation funding community wellbeing.",issues:["Check the 'Community Wellbeing' program area","They prefer to fund innovative, scalable solutions","Requires a detailed Expression of Interest"]},
+{id:21,name:"Kmart Wishing Tree Appeal",category:"Corporate",location:"National",phone:"",email:"",website:"kmart.com.au/wishingtree",desc:"Annual Christmas appeal. Good for securing gifts and essentials for families.",issues:["Need to partner locally or via Salvation Army","Great for end-of-year client support","Contact local store managers early"]},
+{id:22,name:"McCusker Charitable Foundation",category:"Philanthropy",location:"WA",phone:"(08) 9381 4433",email:"info@mccuskerfoundation.org.au",website:"",desc:"Private WA foundation supporting medical research, community, and education.",issues:["No formal website; usually requires an introduction or mailed proposal","Focus on tangible WA community benefits","Try to find a mutual connection for an intro"]},
+{id:23,name:"Mission Australia WA",category:"Partner",location:"WA",phone:"(08) 9225 0400",email:"wa@missionaustralia.com.au",website:"missionaustralia.com.au",desc:"National charity with a strong WA presence in homelessness and social housing.",issues:["Important for strategic alignment and referrals","Look at their 'Youth Accommodation Support Services'","Collaborative grant opportunities"]},
+{id:24,name:"HBF Community Partnerships",category:"Corporate",location:"WA",phone:"133 423",email:"community@hbf.com.au",website:"hbf.com.au/about-hbf/community",desc:"WA health insurer supporting health and wellbeing initiatives.",issues:["Pitch homelessness as a critical health determinant","Look for their regular grant/partnership rounds","Potential for employee volunteer days"]},
+{id:25,name:"Paul Ramsay Foundation",category:"Philanthropy",location:"National",phone:"(02) 8058 0000",email:"info@paulramsayfoundation.org.au",website:"paulramsayfoundation.org.au",desc:"One of Australia's largest foundations, focused on breaking cycles of disadvantage.",issues:["Focus on systemic change and breaking disadvantage cycles","They often seek out partners rather than open grants, but worth an intro","Highly strategic funding"]},
+{id:26,name:"Bunnings Group",category:"Corporate",location:"Local",phone:"See local store",email:"",website:"bunnings.com.au/about-us/in-our-community",desc:"Offers local community support, sausage sizzles, and product donations.",issues:["Book a sausage sizzle for unrestricted fundraising","Ask for product donations (paint, tools, garden) for shelter maintenance","Must apply through the local store manager"]},
+{id:27,name:"City of Stirling Community Grants",category:"Grant",location:"Stirling",phone:"(08) 9205 8555",email:"grants@stirling.wa.gov.au",website:"stirling.wa.gov.au",desc:"Local grants for projects within the City of Stirling.",issues:["Useful if we have clients or facilities in the Stirling area","Grants up to $10k usually available","Focus on community connection"]},
+{id:28,name:"St John of God Health Care Community Grants",category:"Grant",location:"WA",phone:"1800 060 000",email:"info@sjog.org.au",website:"sjog.org.au",desc:"Catholic health care provider offering grants for community projects tackling disadvantage.",issues:["Pitch the health benefits of stable housing","Look for their 'Community capacity building' grants","Check their specific funding windows"]},
+{id:29,name:"Zonta House Refuge Association",category:"Partner",location:"WA",phone:"1800 870 149",email:"info@zontahouse.org.au",website:"zontahouse.org.au",desc:"Supports women who have experienced family and domestic violence.",issues:["Crucial referral partner for women fleeing DV","Learn from their trauma-informed care models","Potential for joint advocacy"]},
+{id:30,name:"Apex Foundation",category:"Philanthropy",location:"National",phone:"1800 060 000",email:"info@apexfoundation.org.au",website:"apexfoundation.org.au",desc:"Supports initiatives that improve the lives of young Australians.",issues:["Target youth homelessness programs for this grant","Usually smaller grants, good for specific projects","Check application deadlines"]},
+{id:31,name:"Rotary Clubs (Perth Region)",category:"Philanthropy",location:"Local",phone:"",email:"",website:"rotary.org",desc:"Local service clubs that frequently fund community projects and provide volunteers.",issues:["Find the club closest to our operations","Offer to do a guest speaking spot at their breakfast/dinner meeting","Great for specific equipment or small project funding"]},
+{id:32,name:"Lions Clubs WA",category:"Philanthropy",location:"Local",phone:"",email:"",website:"lionsclubs.org.au",desc:"Community service clubs focusing on local needs.",issues:["Similar approach to Rotary; seek speaking engagements","Can help with community events or specific fundraisers","Good for grassroots support"]},
+{id:33,name:"Coles SecondBite",category:"Partner",location:"National",phone:"1800 263 283",email:"admin@secondbite.org",website:"secondbite.org",desc:"Rescues surplus food from Coles and distributes it to charities.",issues:["Register to receive fresh food donations","Reduces catering costs for our services","Helps with nutritional support for clients"]},
+{id:34,name:"Optus Community Grants",category:"Corporate",location:"National",phone:"133 937",email:"yesoptus@optus.com.au",website:"optus.com.au/about/sustainability",desc:"Focuses on digital inclusion and youth.",issues:["Pitch programs that give homeless youth access to phones/internet","Digital literacy training funding","Check if they have device donation programs"]},
+{id:35,name:"Department of Communities (WA Gov)",category:"Grant",location:"WA State",phone:"1800 176 888",email:"grants@communities.wa.gov.au",website:"communities.wa.gov.au",desc:"The primary state government department for housing and homelessness.",issues:["Monitor for specific homelessness tenders and grants","Ensure we are on their preferred provider lists","Key relationship for long-term viability"]},
+{id:36,name:"StreetSmart Australia",category:"Grant",location:"National",phone:"(03) 9877 9255",email:"info@streetsmartaustralia.org",website:"streetsmartaustralia.org",desc:"Raises funds and distributes them to grassroots homeless charities.",issues:["They specifically target smaller, community-based organizations","Apply for their Community Grants program","Look into participating in their 'DineSmart' or 'CafeSmart' campaigns"]},
+{id:37,name:"The Salvation Army WA",category:"Partner",location:"WA",phone:"13 72 58",email:"",website:"salvationarmy.org.au/wa",desc:"Major provider of homelessness and emergency relief services.",issues:["Crucial for emergency accommodation referrals","Partnership on winter appeals","Access to their financial counselling services for our clients"]},
+{id:38,name:"Perth Airport Community Grants",category:"Corporate",location:"Perth",phone:"(08) 9478 8888",email:"community@perthairport.com.au",website:"perthairport.com.au/Home/corporate/community",desc:"Offers grants for community projects in the Perth area.",issues:["Focus on community connection and social outcomes","Usually smaller grants ($5k-$10k)","Check if our location falls within their priority areas"]},
+{id:39,name:"Good Shepherd Microfinance",category:"Partner",location:"National",phone:"1300 121 130",email:"",website:"goodshepherdmicrofinance.org.au",desc:"Provides no-interest loans (NILS) to people on low incomes.",issues:["Refer clients here to avoid predatory payday lenders","Helps clients secure bond money or whitegoods","Crucial for helping clients transition to permanent housing"]},
+{id:40,name:"St George Foundation",category:"Corporate",location:"National",phone:"(02) 9236 1111",email:"foundation@stgeorge.com.au",website:"stgeorgefoundation.com.au",desc:"Funds projects that help disadvantaged children and youth.",issues:["Target programs supporting children in homeless families","Grants up to $50k available","Rigorous application process"]},
+{id:41,name:"City of Fremantle Community Grants",category:"Grant",location:"Fremantle",phone:"(08) 9432 9999",email:"grants@fremantle.wa.gov.au",website:"fremantle.wa.gov.au",desc:"Local grants for the Fremantle area, which has a visible homeless population.",issues:["Essential if operating or expanding into Freo","Focus on social inclusion and community safety","Regular funding rounds"]},
+{id:42,name:"Macquarie Group Foundation",category:"Corporate",location:"National",phone:"(02) 8232 3333",email:"foundation@macquarie.com",website:"macquarie.com/au/about/community",desc:"Large corporate foundation focusing on social innovation and disadvantage.",issues:["They often match staff donations; find an internal champion","Focus on capacity building and innovative models","High value, highly competitive"]},
+{id:43,name:"Jackson McDonald (Pro Bono)",category:"Pro-Bono",location:"Perth",phone:"(08) 9426 6611",email:"info@jacmac.com.au",website:"jacmac.com.au",desc:"Major WA law firm offering pro bono legal services to charities.",issues:["Apply for assistance with charity registration, contracts, or leases","Reduces operational legal costs to zero","Need to clearly articulate our charitable status"]},
+{id:44,name:"Herbert Smith Freehills (Pro Bono)",category:"Pro-Bono",location:"Perth",phone:"(08) 9211 7777",email:"",website:"herbertsmithfreehills.com",desc:"Global law firm with a Perth office and a strong pro bono program.",issues:["Useful for complex legal or governance advice","They take on high-impact social justice work","Submit a formal request for assistance"]},
+{id:45,name:"KPMG (Social Impact)",category:"Pro-Bono",location:"Perth",phone:"(08) 9263 7171",email:"",website:"kpmg.com/au",desc:"Accounting/advisory firm that often provides pro bono strategy or auditing for charities.",issues:["Ask about assistance with financial modelling or strategic planning","Great for building organizational capacity","Look for their 'social impact' or 'corporate citizenship' team"]},
+{id:46,name:"MinterEllison (Pro Bono)",category:"Pro-Bono",location:"Perth",phone:"(08) 6189 7800",email:"",website:"minterellison.com",desc:"Law firm offering extensive pro bono support for non-profits.",issues:["Help with employment law, volunteer agreements, and compliance","Strong focus on social disadvantage","Formal application required"]},
+{id:47,name:"Share the Dignity",category:"Partner",location:"National",phone:"",email:"info@sharethedignity.org.au",website:"sharethedignity.org.au",desc:"Provides sanitary items and 'It's in the Bag' donations for homeless women.",issues:["Register as a charity partner to receive donations","Essential resource for female clients","Participate in their August and Christmas drives"]},
+{id:48,name:"Orange Sky Australia",category:"Partner",location:"National",phone:"(07) 3067 5800",email:"info@orangesky.org.au",website:"orangesky.org.au",desc:"Provides free mobile laundry and showers for people experiencing homelessness.",issues:["Coordinate with their van schedules in Perth","Great co-location opportunity for outreach","Build relationships with their volunteers"]},
+{id:49,name:"Thread Together",category:"Partner",location:"National",phone:"(02) 8015 8880",email:"info@threadtogether.org",website:"threadtogether.org",desc:"Provides brand new clothes to people in need.",issues:["Register as a partner to order clothing for clients","Helps with job interviews and dignity","Clothes are end-of-line from major brands"]},
+{id:50,name:"CommBank Foundation",category:"Corporate",location:"National",phone:"13 22 21",email:"",website:"commbank.com.au/about-us/community",desc:"Offers community grants and staff fundraising programs.",issues:["Look into their 'Community Grants' program","Focus on youth and community wellbeing","Local branch managers can sometimes advocate for you"]}
+];
+</script>
+<script>const LEADS_CHARITY_2 = [
+{id:51,name:"Perth Inner City Youth Service (PICYS)",category:"Partner",location:"Perth",phone:"(08) 9388 2791",email:"info@picys.org.au",website:"picys.org.au",desc:"Provides support and accommodation for homeless and at-risk youth in Perth.",issues:["Key partner for youth-specific referrals","Collaborate on youth outreach programs","Share resources and knowledge on youth mental health"]},
+{id:52,name:"Passages Youth Engagement Hub",category:"Partner",location:"Perth",phone:"(08) 9228 1478",email:"passages@svdpwa.org.au",website:"passages.org.au",desc:"A joint venture between Vinnies and Rotary supporting marginalized youth.",issues:["Referral pathway for young clients needing daily support","Learn from their low-barrier engagement model","Coordinate on complex youth cases"]},
+{id:53,name:"City of Victoria Park Community Grants",category:"Grant",location:"Victoria Park",phone:"(08) 9311 8111",email:"admin@vicpark.wa.gov.au",website:"victoriapark.wa.gov.au",desc:"Local government grants for community initiatives.",issues:["Apply if we have outreach or clients in the Vic Park area","Focus on community resilience and inclusion","Grants typically up to $10k"]},
+{id:54,name:"Beyond Bank Foundation",category:"Corporate",location:"National",phone:"13 25 85",email:"foundation@beyondbank.com.au",website:"beyondbank.com.au",desc:"Customer-owned bank foundation funding community housing and disadvantage programs.",issues:["Strong focus on housing affordability and homelessness","Look into their community reward accounts for fundraising","Check their grant rounds"]},
+{id:55,name:"The Smith Family",category:"Partner",location:"National",phone:"1800 024 069",email:"wa@thesmithfamily.com.au",website:"thesmithfamily.com.au",desc:"Children's education charity helping disadvantaged kids.",issues:["Refer families with children for educational support (Learning for Life)","Breaks the intergenerational cycle of poverty","Helps clients keep kids in school despite housing instability"]},
+{id:56,name:"WA Council of Social Service (WACOSS)",category:"Partner",location:"WA",phone:"(08) 9420 7222",email:"info@wacoss.org.au",website:"wacoss.org.au",desc:"Peak body for the community services sector in WA.",issues:["Become a member for sector news and advocacy","Access training and capacity building workshops","Participate in their policy submissions"]},
+{id:57,name:"GIVIT",category:"Partner",location:"National",phone:"info@givit.org.au",email:"info@givit.org.au",website:"givit.org.au",desc:"Platform matching donations of goods with people who need them.",issues:["Register to request specific items (beds, whitegoods) for clients moving into housing","Reduces the need to store physical donations","Highly efficient way to meet client material needs"]},
+{id:58,name:"St Barts",category:"Partner",location:"Perth",phone:"(08) 9323 5100",email:"reception@stbarts.org.au",website:"stbarts.org.au",desc:"Provides supported accommodation and services for people experiencing homelessness.",issues:["Major player in the Perth homelessness sector","Collaborate on complex cases requiring long-term supported accommodation","Learn from their mental health recovery programs"]},
+{id:59,name:"Foundation Housing",category:"Partner",location:"WA",phone:"(08) 9422 0700",email:"info@foundationhousing.org.au",website:"foundationhousing.org.au",desc:"One of WA's largest community housing providers.",issues:["Crucial partner for transitioning clients into long-term affordable housing","Understand their waitlist and eligibility criteria","Advocate together for more social housing stock"]},
+{id:60,name:"Fremantle Foundation",category:"Philanthropy",location:"Fremantle",phone:"(08) 9433 6644",email:"info@fremantlefoundation.com",website:"fremantlefoundation.org.au",desc:"Community foundation connecting donors with local causes in the Fremantle region.",issues:["Connect with local philanthropists through them","Apply for their 'Impact100 Fremantle' grants","Focus on initiatives improving the Fremantle community"]},
+{id:61,name:"Impact100 WA",category:"Philanthropy",location:"WA",phone:"",email:"info@impact100wa.org.au",website:"impact100wa.org.au",desc:"Collective giving group offering large $100k grants to WA charities.",issues:["Highly competitive, requires a transformational project idea","Focus on a specific, measurable impact","Great for scaling up a successful pilot program"]},
+{id:62,name:"City of Vincent Community Support Grants",category:"Grant",location:"Vincent",phone:"(08) 9273 6000",email:"mail@vincent.wa.gov.au",website:"vincent.wa.gov.au",desc:"Grants for projects benefiting the inner-city Vincent community.",issues:["Important if operating near Highgate/Leederville/Mt Lawley","Focus on social inclusion and vulnerable groups","Smaller grants for immediate impact"]},
+{id:63,name:"Good Sammy Enterprises",category:"Partner",location:"WA",phone:"(08) 9463 0500",email:"info@goodsammy.com.au",website:"goodsammy.com.au",desc:"Provides employment for people with disabilities and runs op-shops.",issues:["Source cheap or free clothing/furniture for clients","Explore employment pathways for clients with disabilities","Partnership on textile recycling"]},
+{id:64,name:"Grill'd Local Matters",category:"Corporate",location:"Local",phone:"See local store",email:"",website:"grilld.com.au/localmatters",desc:"Burger chain offering $500 monthly donations to local community groups.",issues:["Apply at the local Perth/CBD stores","Good for small, unrestricted cash injections","Raises awareness among local diners"]},
+{id:65,name:"RAC WA Community Sponsorships",category:"Corporate",location:"WA",phone:"13 17 03",email:"sponsorship@rac.com.au",website:"rac.com.au",desc:"Motoring club offering sponsorships for community initiatives.",issues:["Focus on safety, mobility, or community connection","Might fund a vehicle for outreach services","Check their 'Connecting Communities' fund"]},
+{id:66,name:"Manna Inc",category:"Partner",location:"Perth",phone:"(08) 9362 2992",email:"info@manna.org.au",website:"manna.org.au",desc:"Provides meals for the homeless and disadvantaged in Perth.",issues:["Coordinate with their meal services (Manna Kids, Hot Meals)","Refer clients needing immediate food relief","Collaborate on winter appeals"]},
+{id:67,name:"No Limits Perth",category:"Partner",location:"Perth",phone:"0422 566 222",email:"info@nolimitsperth.org.au",website:"nolimitsperth.org.au",desc:"Charity providing essential items, food, and furniture to those in crisis.",issues:["Partner to furnish homes when clients secure housing","Access emergency food hampers","Great grassroots volunteer-run organization"]},
+{id:68,name:"MercyCare",category:"Partner",location:"WA",phone:"(08) 9442 3444",email:"info@mercycare.com.au",website:"mercycare.com.au",desc:"Large Catholic provider of community, family, and health services.",issues:["Referrals for family support and early learning","Explore their youth and homelessness services","Collaborate on complex family cases"]},
+{id:69,name:"Synergy (Community Support)",category:"Corporate",location:"WA",phone:"13 13 53",email:"",website:"synergy.net.au",desc:"WA's largest electricity generator and retailer.",issues:["Check for energy assistance grants or hardship programs for clients","Seek corporate sponsorship for community events","Inquire about energy efficiency advice for shelters"]},
+{id:70,name:"Water Corporation (Community)",category:"Corporate",location:"WA",phone:"13 13 85",email:"",website:"watercorporation.com.au",desc:"State water provider.",issues:["Similar to Synergy, look for hardship programs for clients moving into housing","Check for community grants related to sustainability or community resilience","Educational resources"]},
+{id:71,name:"South32",category:"Corporate",location:"Perth",phone:"(08) 9324 9000",email:"",website:"south32.net/sustainability/communities",desc:"Global mining company headquartered in Perth with community investment programs.",issues:["Focus on education, economic participation, and health","Look for funding that supports skill-building for homeless clients","Corporate volunteering opportunities"]},
+{id:72,name:"City of Joondalup Community Funding",category:"Grant",location:"Joondalup",phone:"(08) 9400 4000",email:"info@joondalup.wa.gov.au",website:"joondalup.wa.gov.au",desc:"Grants for the northern suburbs corridor.",issues:["Apply if we are expanding services north","Focus on community development and social inclusion","Usually smaller grants"]},
+{id:73,name:"Cahoots",category:"Partner",location:"WA",phone:"1300 103 632",email:"info@cahoots.org.au",website:"cahoots.org.au",desc:"Provides inclusive camps and programs for young people facing challenges (including disability).",issues:["Refer vulnerable youth for respite and social connection","Potential partnership for youth development programs","Learn from their inclusive programming"]},
+{id:74,name:"Danjoo Koorliny",category:"Partner",location:"WA",phone:"",email:"info@danjookoorliny.com",website:"danjookoorliny.com",desc:"Aboriginal-led systems change project in WA.",issues:["Crucial to engage with for cultural competency","Ensure our services align with Aboriginal-led solutions for homelessness","Learn from their 2029 and Beyond project"]},
+{id:75,name:"Wungening Aboriginal Corporation",category:"Partner",location:"Perth",phone:"(08) 9221 1411",email:"info@wungening.com.au",website:"wungening.com.au",desc:"Aboriginal community-controlled organization offering health, homelessness, and family support.",issues:["Essential partner for supporting Aboriginal clients","Referrals for culturally safe AOD and housing support","Collaborate on systemic advocacy"]},
+{id:76,name:"Centrecare",category:"Partner",location:"WA",phone:"(08) 9325 6644",email:"enquiries@centrecare.com.au",website:"centrecare.com.au",desc:"Provides extensive social services including counselling, accommodation, and family violence support.",issues:["Referrals for mental health and family counselling","Collaborate on their Entrypoint Perth service (accommodation assessment)","Access their specialized support programs"]},
+{id:77,name:"Entrypoint Perth",category:"Partner",location:"Perth",phone:"1800 124 684",email:"info@entrypointperth.com.au",website:"entrypointperth.com.au",desc:"Free assessment and referral service for people who are homeless or at risk in Perth.",issues:["We MUST be integrated with their referral system","Understand their triage process for clients","Ensure our shelter capacity is updated with them"]},
+{id:78,name:"Homeless Healthcare",category:"Partner",location:"Perth",phone:"(08) 6260 2092",email:"admin@homelesshealthcare.org.au",website:"homelesshealthcare.org.au",desc:"Provides primary healthcare services specifically for the homeless population.",issues:["Crucial for the physical health of our clients","Coordinate with their Street Health and mobile clinics","Invite them to visit our shelter locations regularly"]},
+{id:79,name:"Tranby Engagement Hub (UnitingWA)",category:"Partner",location:"Perth",phone:"(08) 9220 1288",email:"tranby@unitingwa.org.au",website:"unitingwa.org.au/services/tranby",desc:"Crisis support hub offering showers, food, and referrals in the CBD.",issues:["Key location to connect with rough sleepers","Coordinate outreach efforts","Share information on emerging client needs in the CBD"]},
+{id:80,name:"Crossways Community Services",category:"Partner",location:"Armadale",phone:"(08) 9390 4426",email:"info@crosswayscommunity.org.au",website:"crosswayscommunity.org.au",desc:"Provides emergency relief, food, and support in the Armadale region.",issues:["Key partner if we operate in the south-east corridor","Refer clients for emergency relief and food hampers","Collaborate on local community needs"]},
+{id:81,name:"Kaya Glass (Pro Bono/Donation)",category:"Corporate",location:"Perth",phone:"0400 111 222",email:"info@kayaglass.com.au",website:"",desc:"Local glazier/trades business. (Example of targeting local trades)",issues:["Ask for pro-bono maintenance for shelter properties","Seek in-kind donations of materials","Trades businesses often prefer donating labor over cash"]},
+{id:82,name:"Officeworks Community Programs",category:"Corporate",location:"National",phone:"1300 633 423",email:"",website:"officeworks.com.au",desc:"Offers support for education and community groups.",issues:["Ask local store for in-kind donations of stationery/printing for clients (e.g., printing resumes)","Look for their 'Make a Difference' appeal","Potential for tech donations"]},
+{id:83,name:"IKEA Perth (Community)",category:"Corporate",location:"Perth",phone:"(08) 9201 4000",email:"",website:"ikea.com/au",desc:"IKEA often partners with local charities to furnish shelters or transitional housing.",issues:["Pitch a project to refurnish a shelter space","Ask for discontinued or display stock for clients moving into permanent housing","Focus on their sustainability and community living goals"]},
+{id:84,name:"Satterley Property Group",category:"Corporate",location:"WA",phone:"(08) 9368 9000",email:"info@satterley.com.au",website:"satterley.com.au",desc:"Large WA residential land developer.",issues:["Seek funding through their community development programs","Pitch initiatives that support communities in their new estates","Potential for large-scale corporate philanthropy"]},
+{id:85,name:"PwC Australia (Social Impact)",category:"Pro-Bono",location:"Perth",phone:"(08) 9238 3000",email:"",website:"pwc.com.au",desc:"Consulting firm with a strong social impact and pro-bono practice.",issues:["Apply for assistance with impact measurement or financial modelling","Great for scaling our operations professionally","Requires a clear, strategic project pitch"]},
+{id:86,name:"Deloitte (WorldClass)",category:"Pro-Bono",location:"Perth",phone:"(08) 9365 7000",email:"",website:"deloitte.com/au",desc:"Consulting firm focusing on empowering individuals through education and skills.",issues:["Seek pro-bono support for digital transformation or strategy","Align with their goal to impact futures","Look for their 'Impact Day' volunteering opportunities"]},
+{id:87,name:"City of Melville Community Grants",category:"Grant",location:"Melville",phone:"1300 635 845",email:"melinfo@melville.wa.gov.au",website:"melvillecity.com.au",desc:"Grants for the southern suburbs.",issues:["Useful if expanding services south of the river","Focus on building a connected and inclusive community","Grants up to $10k"]},
+{id:88,name:"Hatch (Community)",category:"Corporate",location:"Perth",phone:"(08) 9428 5444",email:"",website:"hatch.com",desc:"Global engineering firm with a large Perth office.",issues:["Seek corporate sponsorship or employee volunteering","They often look for local, tangible projects to support","Focus on STEM, education, or community building"]},
+{id:89,name:"Navitas (Education & Community)",category:"Corporate",location:"Perth",phone:"(08) 9314 9600",email:"info@navitas.com",website:"navitas.com",desc:"Global education provider headquartered in Perth.",issues:["Explore partnerships for client education and training pathways","English language support for CALD homeless clients","Corporate foundation grants"]},
+{id:90,name:"Crown Resorts Foundation",category:"Philanthropy",location:"National",phone:"(03) 9292 8824",email:"foundation@crownresorts.com.au",website:"crownresorts.com.au/foundation",desc:"Major foundation funding arts, education, and community welfare.",issues:["They have funded significant homelessness initiatives previously","Highly competitive, needs a strong, measurable pitch","Look for their 'Community' funding stream"]},
+{id:91,name:"Mind Australia (WA)",category:"Partner",location:"WA",phone:"1300 286 463",email:"info@mindaustralia.org.au",website:"mindaustralia.org.au",desc:"Major provider of community mental health services.",issues:["Crucial partner as mental health and homelessness are deeply linked","Refer clients for specialized psychosocial support","Collaborate on supported housing models"]},
+{id:92,name:"Richmond Wellbeing",category:"Partner",location:"WA",phone:"1800 742 466",email:"info@rw.org.au",website:"rw.org.au",desc:"WA-based mental health and NDIS support provider.",issues:["Partner for clients navigating the NDIS system","Access their residential recovery programs","Share resources on trauma-informed care"]},
+{id:93,name:"Legal Aid WA",category:"Partner",location:"WA",phone:"1300 650 579",email:"infoline@legalaid.wa.gov.au",website:"legalaid.wa.gov.au",desc:"State provider of legal assistance for disadvantaged people.",issues:["Essential referral for clients with tenancy, debt, or family law issues","Invite them to run legal clinics at our shelters","Reduces legal barriers preventing clients from securing housing"]},
+{id:94,name:"Tenancy WA",category:"Partner",location:"WA",phone:"(08) 9221 0088",email:"admin@tenancywa.org.au",website:"tenancywa.org.au",desc:"Community legal centre specializing in residential tenancy law.",issues:["Crucial for clients facing eviction or bond disputes","Partner to advocate for renters' rights","Access their resources to educate clients on maintaining a tenancy"]},
+{id:95,name:"Financial Counsellors' Association of WA (FCAWA)",category:"Partner",location:"WA",phone:"1800 007 007",email:"admin@fcawa.org",website:"fcawa.org",desc:"Peak body for financial counsellors.",issues:["Refer clients for debt management and budgeting advice","Essential step before transitioning a client into independent housing","Helps break the cycle of poverty"]},
+{id:96,name:"Volunteering WA",category:"Partner",location:"WA",phone:"(08) 9482 4333",email:"info@volunteeringwa.org.au",website:"volunteeringwa.org.au",desc:"Peak body for volunteering in WA.",issues:["Register to recruit volunteers for our shelters and programs","Access training on volunteer management","Get help with corporate volunteering placements"]},
+{id:97,name:"Lions Eye Institute",category:"Partner",location:"WA",phone:"(08) 9381 0777",email:"enquiry@lei.org.au",website:"lei.org.au",desc:"Medical research and clinical facility.",issues:["Explore partnerships for free vision screening for homeless clients (e.g., mobile clinics)","Poor vision is a major barrier to employment and housing","Connect with their community outreach programs"]},
+{id:98,name:"Australian Red Cross (WA)",category:"Partner",location:"WA",phone:"(08) 9225 8888",email:"wainfo@redcross.org.au",website:"redcross.org.au",desc:"Provides emergency relief, migration support, and community programs.",issues:["Access their emergency relief funds for clients in crisis","Collaborate on disaster preparedness for vulnerable populations","Referrals for their 'Homelessness Service' programs"]},
+{id:99,name:"Vinnies Tom Fisher House",category:"Partner",location:"Perth",phone:"(08) 9328 6605",email:"tomfisher@svdpwa.org.au",website:"vinnies.org.au",desc:"An intensive intervention service for rough sleepers with complex needs.",issues:["Crucial referral point for clients who are rough sleeping and have high needs","Learn from their intensive case management model","Coordinate closely with their outreach team"]},
+{id:100,name:"City of Gosnells Community Grants",category:"Grant",location:"Gosnells",phone:"(08) 9397 3000",email:"council@gosnells.wa.gov.au",website:"gosnells.wa.gov.au",desc:"Grants for the south-east corridor.",issues:["Apply if operating in Gosnells/Armadale area","Focus on community safety and inclusion","Good for funding local events or small programs"]}
+];
+</script>
+<script>const LEADS_CHARITY_3 = [
+{id:101,name:"Perth City Farm",category:"Partner",location:"Perth",phone:"(08) 9325 7229",email:"admin@perthcityfarm.org.au",website:"perthcityfarm.org.au",desc:"Urban farm and community centre focusing on sustainability and connection.",issues:["Potential for therapeutic horticulture programs for clients","Source fresh, organic produce for our shelters","Collaborate on community events and volunteering opportunities"]},
+{id:102,name:"GiveNow",category:"Partner",location:"National",phone:"(03) 9320 6848",email:"service@givenow.com.au",website:"givenow.com.au",desc:"Commission-free online donation platform for Australian charities.",issues:["Set up an account to receive online donations efficiently","Reduces administrative overhead for fundraising","Access their donor management tools"]},
+{id:103,name:"Street Connect (Anglicare WA)",category:"Partner",location:"Perth",phone:"(08) 9283 5333",email:"streetconnect@anglicarewa.org.au",website:"anglicarewa.org.au",desc:"Mobile youth outreach service operating in the Perth CBD and Northbridge.",issues:["Essential for connecting with homeless youth on the streets","Coordinate our outreach efforts to avoid duplication","Share information on emerging trends among rough sleepers"]},
+{id:104,name:"Uniting Church in Australia (WA)",category:"Partner",location:"WA",phone:"(08) 9260 9800",email:"info@wa.uca.org.au",website:"unitingchurchwa.org.au",desc:"Major religious organization with extensive community services and property holdings.",issues:["Explore potential use of underutilized church properties for housing or shelters","Connect with local congregations for volunteering and donations","Collaborate on social justice advocacy"]},
+{id:105,name:"Catholic Archdiocese of Perth",category:"Partner",location:"WA",phone:"(08) 6104 3600",email:"communications@perthcatholic.org.au",website:"perthcatholic.org.au",desc:"Extensive network of parishes, schools, and social services (e.g., Centrecare, Vinnies).",issues:["Similar to Uniting Church, explore property partnerships","Engage Catholic schools for fundraising and awareness (e.g., winter sleepouts)","Tap into their established social welfare network"]},
+{id:106,name:"BHP (Corporate Affairs)",category:"Corporate",location:"Perth",phone:"(08) 6224 4444",email:"",website:"bhp.com",desc:"Beyond the Foundation, the corporate arm often sponsors local events and initiatives.",issues:["Seek sponsorship for our major fundraising events","Inquire about corporate volunteering days for their Perth staff","Pitch for matched giving programs for their employees"]},
+{id:107,name:"Fortescue Metals Group (FMG)",category:"Corporate",location:"Perth",phone:"(08) 6218 8888",email:"fmgl@fmgl.com.au",website:"fmgl.com.au",desc:"Major iron ore company headquartered in Perth, known for strong Aboriginal engagement.",issues:["Seek funding for programs supporting Aboriginal homeless clients","Look into their 'VTEC' training programs for employment pathways","Pitch for corporate sponsorship"]},
+{id:108,name:"Chevron Australia",category:"Corporate",location:"Perth",phone:"(08) 9216 4000",email:"aucorporateaffairs@chevron.com",website:"australia.chevron.com/community",desc:"Major oil and gas operator with significant WA community investments.",issues:["Focus on their 'health and education' pillars","Look for long-term partnership opportunities rather than one-off grants","Highly competitive, requires a polished proposal"]},
+{id:109,name:"WA Primary Health Alliance (WAPHA)",category:"Grant",location:"WA",phone:"(08) 6272 4900",email:"info@wapha.org.au",website:"wapha.org.au",desc:"Coordinates primary health care in WA and distributes federal funding.",issues:["Look for grants related to mental health and AOD services for vulnerable populations","Pitch the connection between housing and health outcomes","Partner on pilot programs for integrated care"]},
+{id:110,name:"Fremantle Ports",category:"Corporate",location:"Fremantle",phone:"(08) 9430 4911",email:"mail@fremantleports.com.au",website:"fremantleports.com.au",desc:"Operates the port of Fremantle, offers community sponsorships.",issues:["Apply if we have operations or clients in the Fremantle/Kwinana area","Focus on community enrichment and education","Usually smaller grants ($1k-$5k)"]},
+{id:111,name:"Lotterywest (Emergency Relief)",category:"Grant",location:"WA",phone:"133 777",email:"hello@lotterywest.wa.gov.au",website:"lotterywest.wa.gov.au",desc:"Specific funding stream for organizations providing emergency food, clothing, and shelter.",issues:["Essential funding for our immediate crisis response services","Requires clear tracking of client numbers and needs","Apply annually to sustain emergency programs"]},
+{id:112,name:"Clough Foundation",category:"Corporate",location:"Perth",phone:"(08) 9281 9281",email:"foundation@clough.com.au",website:"cloughgroup.com",desc:"Engineering and construction company foundation supporting education, Indigenous, and healthy communities.",issues:["Pitch programs that improve the health and wellbeing of homeless individuals","Look for alignment with their Indigenous engagement goals","Inquire about pro-bono engineering/construction advice for our properties"]},
+{id:113,name:"Lions Club of Perth",category:"Philanthropy",location:"Perth",phone:"",email:"secretary@perthlions.org.au",website:"perthlions.org.au",desc:"Active local chapter of the international service club.",issues:["Seek funding for specific, tangible items (e.g., a new van, shelter beds)","Offer to present at their meetings","They prefer to fund physical assets rather than operating costs"]},
+{id:114,name:"Rotary Club of Perth",category:"Philanthropy",location:"Perth",phone:"(08) 9321 5994",email:"info@rotaryperth.org.au",website:"rotaryperth.org.au",desc:"One of the oldest and largest Rotary clubs in WA.",issues:["Similar to Lions, pitch for specific projects or equipment","Great networking opportunity with Perth business leaders","Look into their community grants program"]},
+{id:115,name:"The West Australian (Seven West Media)",category:"Partner",location:"WA",phone:"(08) 9482 3111",email:"news@thewest.com.au",website:"thewest.com.au",desc:"Major WA newspaper and media outlet.",issues:["Crucial for PR and raising awareness of homelessness issues","Pitch human-interest stories about our clients (with consent) to drive donations","Seek in-kind advertising space for our major campaigns"]},
+{id:116,name:"Nova 93.7",category:"Partner",location:"Perth",phone:"(08) 9382 0937",email:"info@nova937.com.au",website:"novafm.com.au",desc:"Popular Perth radio station.",issues:["Similar to The West, pitch for PR and awareness","See if they will make us their 'charity partner' for a specific event or campaign","Great for reaching a younger demographic for fundraising"]},
+{id:117,name:"Ray White (Corporate/Local Offices)",category:"Corporate",location:"National",phone:"",email:"",website:"raywhite.com",desc:"Real estate agency network.",issues:["Partner with local offices for their 'A Little Ray of Giving' Christmas campaign","Discuss potential for discounted property management or access to rentals for clients","Real estate agents have strong local networks"]},
+{id:118,name:"REIWA (Real Estate Institute of WA)",category:"Partner",location:"WA",phone:"(08) 9380 8222",email:"info@reiwa.com.au",website:"reiwa.com.au",desc:"Peak body for the real estate profession in WA.",issues:["Vital partner for advocating for affordable rentals and addressing the housing crisis","Collaborate on initiatives to encourage landlords to rent to vulnerable people","Access their market data for our grant applications"]},
+{id:119,name:"Seek.com.au (Volunteer)",category:"Partner",location:"National",phone:"1300 658 700",email:"",website:"volunteer.com.au",desc:"Australia's largest volunteer recruitment platform.",issues:["Essential for recruiting skilled and general volunteers","Ensure our organization profile is up-to-date and compelling","Post specific roles (e.g., 'Pro-Bono Accountant', 'Shelter Assistant')"]},
+{id:120,name:"Pro Bono Australia",category:"Partner",location:"National",phone:"(03) 8080 5650",email:"info@probonoaustralia.com.au",website:"probonoaustralia.com.au",desc:"News, jobs, and resources for the Australian not-for-profit sector.",issues:["Post our job vacancies and volunteer roles here","Access their salary surveys and sector reports","Subscribe to their newsletter for grant alerts and industry news"]},
+{id:121,name:"Curtin University (Community Engagement)",category:"Partner",location:"Perth",phone:"(08) 9266 9266",email:"community@curtin.edu.au",website:"curtin.edu.au",desc:"Major WA university with a strong focus on social impact.",issues:["Partner for research projects on homelessness (adds credibility to our grants)","Take on social work, psychology, or nursing students for practicum placements","Seek access to their facilities for events"]},
+{id:122,name:"UWA (McCusker Centre for Citizenship)",category:"Partner",location:"Perth",phone:"(08) 6488 8754",email:"info-mccusker@uwa.edu.au",website:"mccuskercentre.uwa.edu.au",desc:"Connects UWA students with community organizations for internships.",issues:["Host interns to help with marketing, research, or admin (free, high-quality help)","Build relationships with future leaders and philanthropists","Enhances our organizational capacity"]},
+{id:123,name:"GHD (Community)",category:"Corporate",location:"Perth",phone:"(08) 6222 8222",email:"permail@ghd.com",website:"ghd.com",desc:"Global engineering, architecture, and environmental consulting firm.",issues:["Seek pro-bono architecture or engineering advice for shelter design/renovation","Apply for their 'GHD Foundation' grants","Corporate volunteering (e.g., painting a shelter)"]},
+{id:124,name:"KFC Youth Foundation",category:"Corporate",location:"National",phone:"",email:"youthfoundation@kfc.com.au",website:"kfc.com.au/kfc-youth-foundation",desc:"Funds charities that help young Australians build confidence and skills.",issues:["Apply if our programs focus on youth empowerment and breaking the homelessness cycle","Look for their annual grant rounds","Potential for in-kind food donations for youth events"]},
+{id:125,name:"Grill'd (Local Matters - Perth City)",category:"Corporate",location:"Perth",phone:"(08) 9481 0200",email:"",website:"grilld.com.au",desc:"Specific Grill'd location in the CBD, relevant for inner-city charities.",issues:["Apply to be on their token jars for the month","Good for local awareness and a small cash donation ($100 or $300)","Engage with the store manager directly"]},
+{id:126,name:"Alcoa Foundation",category:"Corporate",location:"WA",phone:"(08) 9316 5111",email:"alcoa.foundation@alcoa.com",website:"alcoa.com/australia",desc:"Mining company funding environmental and social initiatives in areas they operate (e.g., Kwinana, Peel).",issues:["Apply if we have operations or clients in the Peel/Kwinana/South West regions","Focus on community resilience and education","Substantial grants available"]},
+{id:127,name:"City of Armadale Community Grants",category:"Grant",location:"Armadale",phone:"(08) 9394 5000",email:"info@armadale.wa.gov.au",website:"armadale.wa.gov.au",desc:"Local grants for the south-east corridor.",issues:["Apply if operating in this high-need area","Focus on community safety, inclusion, and youth","Grants up to $5k usually"]},
+{id:128,name:"Perth Children's Hospital Foundation",category:"Philanthropy",location:"Perth",phone:"(08) 6456 5550",email:"admin@pchf.org.au",website:"pchf.org.au",desc:"Funds research and equipment for PCH.",issues:["Indirect partner; if we support families with sick children experiencing housing stress, there may be collaborative opportunities","Understand their support services to refer our clients","Advocate together on the health impacts of child homelessness"]},
+{id:129,name:"Goodstart Early Learning",category:"Partner",location:"National",phone:"1800 222 543",email:"",website:"goodstart.org.au",desc:"Australia's largest early learning provider (not-for-profit).",issues:["Partner to secure childcare spots for homeless families (crucial for parents seeking work)","Explore their 'Social Inclusion' programs","Share resources on early childhood trauma"]},
+{id:130,name:"The Big Issue (Perth)",category:"Partner",location:"Perth",phone:"(08) 9226 2886",email:"wa@thebigissue.org.au",website:"thebigissue.org.au",desc:"Social enterprise creating employment opportunities for homeless and marginalized people.",issues:["Refer clients to become vendors (provides income and social connection)","Collaborate on advocacy and public awareness campaigns","Purchase subscriptions for our shelters"]},
+{id:131,name:"Homelessness Australia",category:"Partner",location:"National",phone:"(02) 6247 7744",email:"info@homelessnessaustralia.org.au",website:"homelessnessaustralia.org.au",desc:"National peak body for homelessness.",issues:["Essential for national policy context and advocacy","Access their research and data for our grant applications","Participate in Homelessness Week campaigns"]},
+{id:132,name:"Department of Social Services (Federal)",category:"Grant",location:"National",phone:"1300 653 227",email:"grants@dss.gov.au",website:"dss.gov.au",desc:"Federal government department handling massive social welfare grants.",issues:["Monitor the Community Grants Hub for major funding rounds","Look for 'Financial Wellbeing and Capability' or housing-related grants","Highly complex applications, usually require consortiums"]},
+{id:133,name:"Community Sector Banking",category:"Corporate",location:"National",phone:"1300 442 283",email:"info@communitysectorbanking.com.au",website:"communitysectorbanking.com.au",desc:"Bank dedicated to the not-for-profit sector.",issues:["Consider them for our organizational banking (they understand NFP needs)","Apply for their annual 'Social Investment Grants'","Access their financial literacy resources for clients"]},
+{id:134,name:"Australian Philanthropic Services (APS)",category:"Partner",location:"National",phone:"(02) 9779 6300",email:"hello@australianphilanthropicservices.com.au",website:"australianphilanthropicservices.com.au",desc:"Advises high-net-worth individuals and sets up Private Ancillary Funds (PAFs).",issues:["We need to be on their radar so they recommend us to their wealthy clients","Ensure our DGR (Deductible Gift Recipient) status is clear and up-to-date","Provide them with clear impact reports"]},
+{id:135,name:"Perth Convention and Exhibition Centre (PCEC)",category:"Corporate",location:"Perth",phone:"(08) 9338 0300",email:"info@pcec.com.au",website:"pcec.com.au",desc:"Major event venue in the CBD.",issues:["Ask about discounted or pro-bono space for our major fundraising gala","Inquire about surplus food donations from their catering operations","Pitch to be the 'charity of choice' for large conventions hosted there"]},
+{id:136,name:"Statewide Services (Department of Education WA)",category:"Partner",location:"WA",phone:"(08) 9264 4111",email:"",website:"education.wa.edu.au",desc:"Provides support services for schools, including psychologists and social workers.",issues:["Crucial partner for supporting homeless children to stay in school","Coordinate with their 'Engagement Centers'","Ensure our family shelters are linked with local school support networks"]},
+{id:137,name:"Palmerston Association",category:"Partner",location:"WA",phone:"(08) 9328 7355",email:"perth@palmerston.org.au",website:"palmerston.org.au",desc:"Major provider of alcohol and other drug (AOD) support services.",issues:["Essential referral partner for clients with addiction issues","Collaborate on integrated housing and AOD treatment models","Share resources on harm minimization"]},
+{id:138,name:"Cyrenian House",category:"Partner",location:"WA",phone:"(08) 9328 9200",email:"enquiries@cyrenianhouse.com",website:"cyrenianhouse.com",desc:"Another major WA provider of AOD treatment and residential rehab.",issues:["Similar to Palmerston, crucial for AOD referrals","Partner for clients transitioning out of rehab into independent housing","Advocate together for dual-diagnosis (mental health + AOD) facilities"]},
+{id:139,name:"DropIN (WACOSS)",category:"Partner",location:"WA",phone:"(08) 9420 7222",email:"dropin@wacoss.org.au",website:"dropin.org.au",desc:"Online platform connecting the WA community services sector.",issues:["Register to network with other charities and service providers","Share our news, events, and job vacancies","Collaborate on sector-wide initiatives"]},
+{id:140,name:"Linkwest",category:"Partner",location:"WA",phone:"(08) 9485 8929",email:"office@linkwest.asn.au",website:"linkwest.asn.au",desc:"Peak body for Neighbourhood and Community Resource Centres in WA.",issues:["Partner with local community centres for outreach and client support","They provide safe, welcoming spaces in the suburbs","Access their training and capacity building resources"]},
+{id:141,name:"Stirling Women's Centre",category:"Partner",location:"Stirling",phone:"(08) 9205 8555",email:"",website:"stirling.wa.gov.au",desc:"Provides crisis accommodation and support for women escaping domestic violence.",issues:["Crucial referral pathway for female clients fleeing DV","Learn from their security and trauma-informed protocols","Coordinate on moving clients from crisis to transitional housing"]},
+{id:142,name:"Ruah Centre for Women and Children",category:"Partner",location:"Perth",phone:"13 78 24",email:"hello@ruah.org.au",website:"ruah.org.au",desc:"A purpose-built healing centre (currently under development/recently opened) for FDV.",issues:["Major new facility in Perth, essential to integrate our services with them","Focus on holistic healing and long-term recovery","Refer complex family cases"]},
+{id:143,name:"RSPCA WA",category:"Partner",location:"WA",phone:"(08) 9209 9300",email:"rspca@rspcawa.asn.au",website:"rspcawa.asn.au",desc:"Animal welfare charity.",issues:["Partner on their 'Pets in Crisis' program (fostering pets for people fleeing DV or homelessness)","Pets are a major barrier to people accepting shelter accommodation; we need a solution","Collaborate on pet-friendly housing advocacy"]},
+{id:144,name:"Pet Refuge",category:"Partner",location:"National",phone:"",email:"info@petrefuge.org.au",website:"petrefuge.org.au",desc:"Specifically provides temporary shelter for pets of people escaping domestic violence.",issues:["Similar to RSPCA, use them to remove the 'pet barrier' to securing safety for our clients","Build a referral protocol with them"]},
+{id:145,name:"The Funding Network (TFN)",category:"Grant",location:"National",phone:"(02) 8004 0550",email:"info@thefundingnetwork.com.au",website:"thefundingnetwork.com.au",desc:"Hosts live crowdfunding events where charities pitch to a room of donors.",issues:["Apply to pitch at a Perth event (can raise $50k+ in one night)","Excellent for exposure to high-net-worth individuals and corporate donors","Requires a compelling, concise presentation and a specific project"]},
+{id:146,name:"Perth Rotary - Path of Hope",category:"Philanthropy",location:"Perth",phone:"",email:"info@pathofhope.org.au",website:"pathofhope.org.au",desc:"A joint venture between Rotary and Salvation Army supporting victims of FDV.",issues:["Seek funding or support for women/families transitioning from our shelters into permanent housing","Attend their gala events for networking","Strong corporate backing"]},
+{id:147,name:"Department of Veterans' Affairs (DVA)",category:"Grant",location:"National",phone:"1800 838 372",email:"",website:"dva.gov.au",desc:"Federal department supporting veterans and their families.",issues:["Essential for supporting homeless veterans (a significant demographic)","Look for grants specifically targeting veteran homelessness or mental health","Ensure staff understand DVA referral pathways"]},
+{id:148,name:"RSL WA",category:"Partner",location:"WA",phone:"(08) 9287 3799",email:"admin@rslwa.org.au",website:"rslwa.org.au",desc:"Supports veterans and their families.",issues:["Partner to support homeless veterans","Access their welfare and emergency relief funds for veteran clients","Collaborate on advocacy for veteran housing"]},
+{id:149,name:"100 Women",category:"Philanthropy",location:"WA",phone:"",email:"info@100women.org.au",website:"100women.com.au",desc:"A collaborative giving circle that funds projects empowering women and girls.",issues:["Pitch programs that specifically support homeless women (e.g., job training, health access)","Grants are usually around $30k-$50k","Strong focus on measurable impact and empowerment"]},
+{id:150,name:"Men's Sheds WA",category:"Partner",location:"WA",phone:"(08) 6278 2595",email:"admin@mensshedswa.org.au",website:"mensshedswa.org.au",desc:"Community spaces for men to connect, build, and support mental health.",issues:["Refer isolated male clients for social connection and purpose","Partner for community projects (e.g., building furniture for our shelters)","Great resource for older, socially isolated homeless men"]}
+];
+</script>
+<script>document.addEventListener('DOMContentLoaded', () => {
+  const STORAGE_KEY = 'phb_partner_tracker';
+  function loadState() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; } }
+  function saveState(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+  let state = loadState();
+
+  const ALL_LEADS = [].concat(
+    typeof LEADS_CHARITY_1 !== 'undefined' ? LEADS_CHARITY_1 : [],
+    typeof LEADS_CHARITY_2 !== 'undefined' ? LEADS_CHARITY_2 : [],
+    typeof LEADS_CHARITY_3 !== 'undefined' ? LEADS_CHARITY_3 : []
+  );
+
+  const catSelect = document.getElementById('filter-category');
+  function rebuildCategories() {
+    catSelect.innerHTML = '<option value="all">All Categories</option>';
+    const cats = [...new Set(ALL_LEADS.map(l => l.category))].sort();
+    cats.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; catSelect.appendChild(o); });
+  }
+  rebuildCategories();
+
+  const grid = document.getElementById('card-grid');
+  const searchInput = document.getElementById('search');
+  const statusFilter = document.getElementById('filter-status');
+  const categoryFilter = document.getElementById('filter-category');
+  const contactFilter = document.getElementById('filter-contact');
+  const statsBar = document.getElementById('stats-bar');
+  const modalOverlay = document.getElementById('modal-overlay');
+  const modalContent = document.getElementById('modal-content');
+  const modalClose = document.getElementById('modal-close');
+
+  function getS(id) { return state[id]?.status || 'new'; }
+  function getN(id) { return state[id]?.notes || ''; }
+  function isDone(id) { return state[id]?.done || false; }
+
+  function contactType(l) {
+    if (l.email || l.phone) return 'direct';
+    if (l.website) return 'form-only';
+    return 'none';
+  }
+
+  function catClass(cat) {
+    const c = cat.toLowerCase();
+    if (c.includes('grant')) return 'cat-accounting'; // Greenish
+    if (c.includes('corporate')) return 'cat-cafe'; // Orangey
+    if (c.includes('philanthropy')) return 'cat-mechanic'; // Bluish
+    if (c.includes('partner')) return 'cat-retail'; // Purple
+    if (c.includes('pro-bono')) return 'cat-health'; // Reddish
+    return 'cat-other';
+  }
+
+  function geminiUrl(l) {
+    const prompt = encodeURIComponent(
+      `I'm representing Perth Housing Bridge, a homeless charity in WA. We are reaching out to "${l.name}" (${l.category}, ${l.location}). ` +
+      `Their organization info: ${l.desc} ` +
+      `Our key talking points/issues to bring up with them: ${l.issues.join('; ')}. ` +
+      `Write a professional, compelling outreach email/script (short, max 150 words) to start a conversation with them about potential collaboration, funding, or support. Be warm and partnership-focused.`
+    );
+    return `https://gemini.google.com/app?q=${prompt}`;
+  }
+
+  function statusEmoji(s) { return {new:'🔵',contacted:'🟡',interested:'🟢','not-interested':'🔴','no-answer':'⚪',done:'✅'}[s]||'🔵'; }
+
+  function updateStats() {
+    const leads = ALL_LEADS;
+    const c = {new:0,contacted:0,interested:0,'not-interested':0,'no-answer':0,done:0};
+    leads.forEach(l => { if(isDone(l.id)) c.done++; else c[getS(l.id)]++; });
+    statsBar.innerHTML = `
+      <span class="stat"><span class="stat-dot" style="background:#39d0d8"></span>New: ${c.new}</span>
+      <span class="stat"><span class="stat-dot" style="background:#d29922"></span>Contacted: ${c.contacted}</span>
+      <span class="stat"><span class="stat-dot" style="background:#3fb950"></span>In Progress: ${c.interested}</span>
+      <span class="stat"><span class="stat-dot" style="background:#f85149"></span>Rejected: ${c['not-interested']}</span>
+      <span class="stat"><span class="stat-dot" style="background:#8b949e"></span>No Ans: ${c['no-answer']}</span>
+      <span class="stat"><span class="stat-dot" style="background:#a371f7"></span>Secured: ${c.done}</span>
+      <span class="stat" style="font-weight:700">Total: ${leads.length}</span>`;
+  }
+
+  function render() {
+    const search = searchInput.value.toLowerCase();
+    const sF = statusFilter.value;
+    const cF = categoryFilter.value;
+    const ctF = contactFilter.value;
+    const filtered = ALL_LEADS.filter(l => {
+      if (search && !`${l.name} ${l.category} ${l.location} ${l.desc}`.toLowerCase().includes(search)) return false;
+      const s = isDone(l.id) ? 'done' : getS(l.id);
+      if (sF !== 'all' && s !== sF) return false;
+      if (cF !== 'all' && l.category !== cF) return false;
+      if (ctF !== 'all' && contactType(l) !== ctF) return false;
+      return true;
+    });
+    if (!filtered.length) { grid.innerHTML = '<div class="empty-state">No partners match your filters.</div>'; updateStats(); return; }
+
+    grid.innerHTML = filtered.map(l => {
+      const s = isDone(l.id) ? 'done' : getS(l.id);
+      const n = getN(l.id);
+      const done = isDone(l.id);
+      const contacts = [];
+      if (l.phone) contacts.push(`<span class="contact-chip">📞 <a href="tel:${l.phone}">${l.phone}</a></span>`);
+      if (l.email) contacts.push(`<span class="contact-chip">✉️ <a href="mailto:${l.email}">${l.email}</a></span>`);
+      if (l.website) contacts.push(`<span class="contact-chip">🌐 <a href="https://${l.website}" target="_blank" rel="noopener">${l.website}</a></span>`);
+
+      return `<div class="lead-card status-${s}" data-id="${l.id}">
+        <div class="card-top">
+          <div><div class="card-name">${l.name}</div><div class="card-meta">📍 ${l.location}</div></div>
+          <div class="card-badges">
+            <span class="badge-cat ${catClass(l.category)}">${l.category}</span>
+          </div>
+        </div>
+        <div class="card-desc">${l.desc}</div>
+        <div class="card-issues">${l.issues.slice(0,2).map(i=>`<div class="card-issue">${i}</div>`).join('')}</div>
+        <div class="card-contacts">${contacts.join('')}</div>
+        <div class="card-actions">
+          <select class="card-sel" data-id="${l.id}">
+            <option value="new" ${s==='new'?'selected':''}>🔵 New</option>
+            <option value="contacted" ${s==='contacted'?'selected':''}>🟡 Contacted</option>
+            <option value="interested" ${s==='interested'?'selected':''}>🟢 In Progress</option>
+            <option value="not-interested" ${s==='not-interested'?'selected':''}>🔴 Rejected</option>
+            <option value="no-answer" ${s==='no-answer'?'selected':''}>⚪ No Answer</option>
+          </select>
+          <button class="btn-done${done?' is-done':''}" data-id="${l.id}">${done?'✅ Secured':'☐ Secured'}</button>
+          <a class="btn-gemini" href="${geminiUrl(l)}" target="_blank" rel="noopener" title="Get AI outreach script">✨ Gemini</a>
+        </div>
+        <textarea class="card-notes" data-id="${l.id}" placeholder="Add notes...">${n}</textarea>
+      </div>`;
+    }).join('');
+
+    grid.querySelectorAll('.card-sel').forEach(sel => {
+      sel.addEventListener('change', e => { e.stopPropagation(); const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].status=e.target.value; saveState(state); render(); });
+    });
+    grid.querySelectorAll('.btn-done').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].done=!state[id].done; saveState(state); render(); });
+    });
+    grid.querySelectorAll('.card-notes').forEach(ta => {
+      ta.addEventListener('input', e => { const id=+e.target.dataset.id; if(!state[id])state[id]={}; state[id].notes=e.target.value; saveState(state); });
+      ta.addEventListener('click', e => e.stopPropagation());
+    });
+    grid.querySelectorAll('.lead-card').forEach(card => {
+      card.addEventListener('click', e => { if(e.target.closest('select,textarea,a,button')) return; openModal(+card.dataset.id); });
+    });
+    updateStats();
+  }
+
+  function openModal(id) {
+    const l = ALL_LEADS.find(x=>x.id===id); if(!l)return;
+    const s=isDone(l.id)?'done':getS(l.id), n=getN(l.id);
+    let ch='';
+    if(l.phone)ch+=`<div>📞 <a href="tel:${l.phone}">${l.phone}</a></div>`;
+    if(l.email)ch+=`<div>✉️ <a href="mailto:${l.email}">${l.email}</a></div>`;
+    if(!l.phone&&!l.email)ch+=`<div>📝 Contact via website</div>`;
+    modalContent.innerHTML = `
+      <h2>${l.name}</h2>
+      <div class="m-meta">${l.category} · 📍 ${l.location} · ${statusEmoji(s)} ${s.replace('-',' ')}</div>
+      ${l.website?`<div class="m-website m-section">🌐 <a href="https://${l.website}" target="_blank">${l.website}</a></div>`:''}
+      <div class="m-desc">${l.desc}</div>
+      <div class="m-section"><div class="m-label">Action Items / Pitch</div>${l.issues.map(i=>`<div class="m-issue">${i}</div>`).join('')}</div>
+      <div class="m-section m-contacts"><div class="m-label">Contact Details</div>${ch}</div>
+      <div class="m-section"><div class="m-label">Status</div>
+        <select id="modal-status" style="width:100%;padding:10px;font-size:1rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--font)">
+          <option value="new" ${s==='new'?'selected':''}>🔵 New</option>
+          <option value="contacted" ${s==='contacted'?'selected':''}>🟡 Contacted</option>
+          <option value="interested" ${s==='interested'?'selected':''}>🟢 In Progress / App Sent</option>
+          <option value="not-interested" ${s==='not-interested'?'selected':''}>🔴 Rejected</option>
+          <option value="no-answer" ${s==='no-answer'?'selected':''}>⚪ No Answer</option>
+        </select>
+      </div>
+      <div class="m-section"><div class="m-label">Notes</div><textarea id="modal-notes" style="width:100%;min-height:80px;padding:10px;font-size:0.95rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--font)">${n}</textarea></div>
+      <div class="m-section" style="text-align:center"><a class="btn-gemini" href="${geminiUrl(l)}" target="_blank" rel="noopener" style="display:inline-block;padding:12px 24px;font-size:1rem">✨ Draft Outreach with Gemini</a></div>`;
+    document.getElementById('modal-status').addEventListener('change',e=>{if(!state[id])state[id]={};state[id].status=e.target.value;saveState(state);render();});
+    document.getElementById('modal-notes').addEventListener('input',e=>{if(!state[id])state[id]={};state[id].notes=e.target.value;saveState(state);});
+    modalOverlay.classList.add('active');
+  }
+
+  modalClose.addEventListener('click',()=>modalOverlay.classList.remove('active'));
+  modalOverlay.addEventListener('click',e=>{if(e.target===modalOverlay)modalOverlay.classList.remove('active');});
+  searchInput.addEventListener('input', render);
+  statusFilter.addEventListener('change', render);
+  categoryFilter.addEventListener('change', render);
+  contactFilter.addEventListener('change', render);
+  render();
+});
+</script>
+</body>
+</html>
