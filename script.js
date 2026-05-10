@@ -1,4 +1,29 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // Typing Effect
+  const typeChunks = [
+    "Premium",
+    " Web",
+    " &",
+    " Tech",
+    " Solutions.",
+    "<br><span class='highlight'>Honest",
+    " Perth",
+    " Prices.</span>"
+  ];
+  
+  const typewriterElement = document.getElementById('typewriter');
+  if (typewriterElement) {
+    let typeIndex = 0;
+    function typeNext() {
+      if (typeIndex < typeChunks.length) {
+        typewriterElement.innerHTML += typeChunks[typeIndex];
+        typeIndex++;
+        setTimeout(typeNext, 250);
+      }
+    }
+    setTimeout(typeNext, 400);
+  }
+
   // Intersection Observer for scroll animations
   const observerOptions = {
     root: null,
@@ -37,6 +62,78 @@ document.addEventListener('DOMContentLoaded', () => {
 
     prevBtn.addEventListener('click', () => {
       track.scrollBy({ left: -scrollAmount(), behavior: 'smooth' });
+    });
+  }
+
+  // Bill Upload Logic
+  const dropzone = document.getElementById('upload-dropzone');
+  const fileInput = document.getElementById('bill-file');
+  const previewEl = document.getElementById('upload-preview');
+  const previewName = document.getElementById('preview-name');
+  const removeBtn = document.getElementById('upload-remove');
+  const submitBtn = document.getElementById('upload-submit');
+  const successEl = document.getElementById('upload-success');
+
+  let selectedFile = null;
+  const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+  const ACCEPTED = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
+
+  function showFile(file) {
+    if (!ACCEPTED.includes(file.type)) {
+      alert('Please upload a PDF, PNG, JPG, or WebP file.');
+      return;
+    }
+    if (file.size > MAX_SIZE) {
+      alert('File is too large. Maximum size is 10 MB.');
+      return;
+    }
+    selectedFile = file;
+    previewName.textContent = file.name;
+    dropzone.hidden = true;
+    previewEl.hidden = false;
+  }
+
+  if (dropzone) {
+    // Click to browse
+    dropzone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) showFile(fileInput.files[0]);
+    });
+
+    // Drag and drop
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('drag-over');
+    });
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('drag-over');
+    });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('drag-over');
+      if (e.dataTransfer.files.length) showFile(e.dataTransfer.files[0]);
+    });
+
+    // Remove file
+    removeBtn.addEventListener('click', () => {
+      selectedFile = null;
+      fileInput.value = '';
+      previewEl.hidden = true;
+      dropzone.hidden = false;
+    });
+
+    // Submit — opens mailto with instructions to attach
+    submitBtn.addEventListener('click', () => {
+      if (!selectedFile) return;
+      const subject = encodeURIComponent('Beat My Bill — Bill Upload');
+      const body = encodeURIComponent(
+        `Hi,\n\nI'd like you to beat my current bill.\n\nFile name: ${selectedFile.name}\n\n⚠️ Please attach the file "${selectedFile.name}" to this email before sending.\n\nThanks!`
+      );
+      window.location.href = `mailto:matt@xfer.au?subject=${subject}&body=${body}`;
+
+      // Show success state
+      previewEl.hidden = true;
+      successEl.hidden = false;
     });
   }
 

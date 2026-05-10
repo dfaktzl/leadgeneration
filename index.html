@@ -53,7 +53,7 @@
     <header class="navbar">
         <div class="container nav-content">
             <a href="#" class="logo">
-                <span class="logo-icon">{'}'}</span> Perth Tech Value
+                <span class="logo-icon">}</span> Perth Tech Value
             </a>
             <nav class="nav-links">
                 <a href="#services">Services</a>
@@ -67,23 +67,63 @@
 
     <!-- Hero Section -->
     <section class="hero">
-        <div class="container hero-content">
-            <div class="badge fade-in">
-                <span class="pulse-dot"></span> Available for new projects — Perth 6000
+        <div class="hero-bg-blobs">
+            <div class="blob blob-purple"></div>
+            <div class="blob blob-pink"></div>
+        </div>
+        <div class="container hero-content-grid">
+            <div class="hero-text">
+                <div class="badge fade-in">
+                    <span class="pulse-dot"></span> Available for new projects — Perth 6000
+                </div>
+                <h1 class="hero-title">
+                    <span id="typewriter"></span><span class="cursor">|</span>
+                </h1>
+                <p class="hero-desc slide-up delay-1">Stop overpaying for monthly website subscriptions. Get senior-level IT consulting, custom builds, and in-person support from a local veteran with 20+ years of experience.</p>
+                <div class="hero-actions slide-up delay-2">
+                    <a href="#quote" class="btn btn-primary btn-large">Request a Quote &rarr;</a>
+                    <a href="#services" class="btn btn-secondary btn-large">See Services</a>
+                </div>
+                <div class="review-badge slide-up delay-3">
+                    <div class="stars">★★★★★</div>
+                    <span class="rating">5.0</span>
+                    <span class="rating-text">from 5 local client reviews</span>
+                </div>
             </div>
-            <h1 class="hero-title slide-up">Premium Web & Tech Solutions.<br><span class="highlight">Honest Perth Prices.</span></h1>
-            <p class="hero-desc slide-up delay-1">Stop overpaying for monthly website subscriptions. Get senior-level IT consulting, custom builds, and in-person support from a local veteran with 20+ years of experience.</p>
-            <div class="hero-actions slide-up delay-2">
-                <a href="#quote" class="btn btn-primary btn-large">Request a Quote &rarr;</a>
-                <a href="#services" class="btn btn-secondary btn-large">See Services</a>
-            </div>
-            <div class="review-badge slide-up delay-3">
-                <div class="stars">★★★★★</div>
-                <span class="rating">5.0</span>
-                <span class="rating-text">from 5 local client reviews</span>
+            
+            <div class="hero-visual slide-up delay-2">
+                <div class="glass-dashboard floating">
+                    <div class="dash-header">
+                        <div class="dash-dots"><span></span><span></span><span></span></div>
+                        <div class="dash-title">perth-tech-value.dashboard</div>
+                    </div>
+                    <div class="dash-body">
+                        <div class="dash-stat-row">
+                            <div class="dash-stat">
+                                <span class="stat-label">Performance</span>
+                                <span class="stat-val highlight">100 / 100</span>
+                                <div class="stat-bar"><div class="fill" style="width: 100%"></div></div>
+                            </div>
+                            <div class="dash-stat">
+                                <span class="stat-label">SEO Score</span>
+                                <span class="stat-val highlight">98 / 100</span>
+                                <div class="stat-bar"><div class="fill" style="width: 98%"></div></div>
+                            </div>
+                        </div>
+                        <div class="dash-chart">
+                            <span class="stat-label">Monthly Savings vs Agency</span>
+                            <div class="chart-bars">
+                                <div class="c-bar agency" style="height: 100px;"><span class="c-val">$150</span><span class="c-name">Agency</span></div>
+                                <div class="c-bar us" style="height: 20px;"><span class="c-val">$0</span><span class="c-name">Us</span></div>
+                            </div>
+                        </div>
+                        <div class="dash-code">
+                            <code><span class="c-keyword">const</span> <span class="c-var">stack</span> = [<span class="c-str">'No Lock-in'</span>, <span class="c-str">'Fast'</span>, <span class="c-str">'SEO'</span>];<br><span class="c-var">deliverValue</span>(stack);</code>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="hero-bg-glow"></div>
     </section>
 
     <!-- Trust Bar -->
@@ -110,7 +150,33 @@
                     <li><span class="check">✓</span> Faster, leaner, SEO-ready</li>
                     <li><span class="check">✓</span> Local in-person support</li>
                 </ul>
-                <a href="#quote" class="btn btn-primary mt-4">Get My Beat-Your-Bill Quote &rarr;</a>
+
+                <!-- Bill Upload -->
+                <div id="bill-upload-area" class="bill-upload">
+                    <div id="upload-dropzone" class="upload-dropzone">
+                        <div class="upload-icon">📄</div>
+                        <p class="upload-title">Upload your current bill or invoice</p>
+                        <p class="upload-hint">Drag & drop your file here, or <span class="upload-browse">click to browse</span></p>
+                        <p class="upload-formats">PDF, PNG, JPG — Max 10 MB</p>
+                        <input type="file" id="bill-file" accept=".pdf,.png,.jpg,.jpeg,.webp" hidden>
+                    </div>
+                    <div id="upload-preview" class="upload-preview" hidden>
+                        <div class="preview-file">
+                            <span class="preview-icon">📎</span>
+                            <span id="preview-name" class="preview-name"></span>
+                            <button id="upload-remove" class="preview-remove" aria-label="Remove file">&times;</button>
+                        </div>
+                        <button id="upload-submit" class="btn btn-primary btn-block">Submit My Bill &rarr;</button>
+                    </div>
+                    <div id="upload-success" class="upload-success" hidden>
+                        <div class="success-icon">✅</div>
+                        <h3>Bill received — thank you!</h3>
+                        <p>A team member will review your bill and get back to you <strong>within 24 hours</strong> — usually within <strong>6 hours</strong>.</p>
+                        <p class="success-sub">For anything urgent, email <a href="mailto:matt@xfer.au">matt@xfer.au</a> or call <a href="tel:+61450910100">0450 910 100</a>.</p>
+                    </div>
+                </div>
+
+                <a href="#quote" class="btn btn-secondary mt-4">Or send us a message instead &rarr;</a>
             </div>
         </div>
     </section>
@@ -281,7 +347,7 @@
     <footer class="footer">
         <div class="container footer-content">
             <div class="footer-brand">
-                <span class="logo-icon">{'}'}</span> Perth Tech Value
+                <span class="logo-icon">}</span> Perth Tech Value
                 <span class="footer-text">· &copy; 2026 Queens Park, WA 6000</span>
             </div>
             <div class="footer-links">
@@ -291,6 +357,6 @@
         </div>
     </footer>
 
-    <script src="script.js"></script>
+    <script src="script.js" defer></script>
 </body>
 </html>

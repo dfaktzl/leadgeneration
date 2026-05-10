@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perth Tech Value — Lead Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tracker.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <h1 class="app-title">} Perth Tech Value <span>Lead Tracker</span></h1>
+    <div class="stats-bar" id="stats-bar"></div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="toolbar-inner">
+    <div class="search-box">
+      <input type="text" id="search" placeholder="Search businesses..." autocomplete="off">
+    </div>
+    <div class="filter-group">
+      <select id="filter-status">
+        <option value="all">All Statuses</option>
+        <option value="new">🔵 New</option>
+        <option value="contacted">🟡 Contacted</option>
+        <option value="interested">🟢 Interested</option>
+        <option value="not-interested">🔴 Not Interested</option>
+        <option value="no-answer">⚪ No Answer</option>
+        <option value="done">✅ Done</option>
+      </select>
+      <select id="filter-category">
+        <option value="all">All Categories</option>
+      </select>
+      <select id="filter-contact">
+        <option value="all">All Contact Types</option>
+        <option value="direct">Has Email/Phone</option>
+        <option value="form-only">Contact Form Only</option>
+        <option value="none">No Website</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<main class="main" id="main">
+  <div class="card-grid" id="card-grid"></div>
+</main>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <button class="modal-close" id="modal-close">&times;</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="tracker.js"></script>
+</body>
+</html>
